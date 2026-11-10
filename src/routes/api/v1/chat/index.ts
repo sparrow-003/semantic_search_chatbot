@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { filtersSchema } from "@/lib/events/filters";
+import { filtersSchema, sanitizeFilters } from "@/lib/events/filters";
 import { SEARCH_MODES } from "@/lib/events/types";
 
 const chatBodySchema = z.object({
@@ -48,7 +48,11 @@ export const Route = createFileRoute("/api/v1/chat/")({
           const rawBody = await readBoundedJson(request, 65_536);
           const parsed = chatBodySchema.safeParse(rawBody);
           if (!parsed.success) {
-            throw new HttpError(400, "invalid_request", parsed.error.issues[0]?.message ?? "Invalid chat request.");
+            throw new HttpError(
+              400,
+              "invalid_request",
+              parsed.error.issues[0]?.message ?? "Invalid chat request.",
+            );
           }
 
           const wantsStream =
@@ -61,7 +65,9 @@ export const Route = createFileRoute("/api/v1/chat/")({
             workspaceId: parsed.data.workspaceId ?? null,
             mode: parsed.data.mode,
             model: parsed.data.model ?? null,
-            ...(parsed.data.explicitFilters ? { explicitFilters: parsed.data.explicitFilters } : {}),
+            ...(parsed.data.explicitFilters
+              ? { explicitFilters: sanitizeFilters(parsed.data.explicitFilters) }
+              : {}),
             context: parsed.data.context ?? null,
             prevTableConfig: parsed.data.prevTableConfig ?? null,
             auth,

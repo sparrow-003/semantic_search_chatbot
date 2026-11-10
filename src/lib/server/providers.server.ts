@@ -3,6 +3,7 @@ import {
   generateChatCompletion,
   generateEmbeddings,
   type ChatModels,
+  type ChatRequest,
 } from "@lovable.dev/ai-gateway";
 import { recordTelemetry } from "./rate-limit.server";
 
@@ -94,7 +95,9 @@ export const lovableEmbeddingProvider: EmbeddingProvider = {
     const batch = await this.generateEmbeddingsBatch([text]);
     const vec = batch[0];
     if (!vec || vec.length !== EMBEDDING_DIMENSIONS) {
-      throw new Error(`Expected ${EMBEDDING_DIMENSIONS}-dim embedding, received ${vec?.length ?? 0}`);
+      throw new Error(
+        `Expected ${EMBEDDING_DIMENSIONS}-dim embedding, received ${vec?.length ?? 0}`,
+      );
     }
     return vec;
   },
@@ -167,7 +170,7 @@ export const lovableLLMProvider: LLMProvider = {
           ],
           temperature: opts.temperature ?? 0.2,
           max_tokens: opts.maxTokens ?? 900,
-        },
+        } as ChatRequest,
         {
           signal: AbortSignal.timeout(opts.timeoutMs ?? 18_000),
           maxRetries: 1,
@@ -215,13 +218,16 @@ export const lovableLLMProvider: LLMProvider = {
         {
           model,
           messages: [
-            { role: "system", content: `${opts.systemPrompt}\nReturn strictly valid JSON with no markdown code fences.` },
+            {
+              role: "system",
+              content: `${opts.systemPrompt}\nReturn strictly valid JSON with no markdown code fences.`,
+            },
             { role: "user", content: opts.userPrompt },
           ],
           response_format: { type: "json_object" },
           temperature: 0.1,
           max_tokens: 900,
-        },
+        } as ChatRequest,
         {
           signal: AbortSignal.timeout(opts.timeoutMs ?? 14_000),
           maxRetries: 1,

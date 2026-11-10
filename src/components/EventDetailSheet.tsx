@@ -1,4 +1,12 @@
-import { Bookmark, Calendar, ExternalLink, MapPin, MessageSquarePlus, Sparkles, Users } from "lucide-react";
+import {
+  Bookmark,
+  Calendar,
+  ExternalLink,
+  MapPin,
+  MessageSquarePlus,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -35,7 +43,9 @@ export function EventDetailSheet() {
             <Badge variant="secondary">{inspectedEvent.category}</Badge>
             <Badge variant="outline">{FORMAT_LABELS[inspectedEvent.format]}</Badge>
             {inspectedEvent.isFree && (
-              <Badge className="bg-emerald-600/15 text-emerald-700 dark:text-emerald-300">Free</Badge>
+              <Badge className="bg-emerald-600/15 text-emerald-700 dark:text-emerald-300">
+                Free
+              </Badge>
             )}
           </div>
           <SheetTitle className="text-left text-lg leading-snug">{inspectedEvent.title}</SheetTitle>
@@ -61,7 +71,9 @@ export function EventDetailSheet() {
               <MapPin className="size-4 text-primary" />
               <span>
                 {inspectedEvent.venue ?? "Virtual"}{" "}
-                {inspectedEvent.city ? `— ${inspectedEvent.city}, ${inspectedEvent.country ?? ""}` : ""}
+                {inspectedEvent.city
+                  ? `— ${inspectedEvent.city}, ${inspectedEvent.country ?? ""}`
+                  : ""}
               </span>
             </div>
             {inspectedEvent.audience.length > 0 && (
@@ -76,7 +88,9 @@ export function EventDetailSheet() {
             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Description
             </h4>
-            <p className="text-sm leading-relaxed text-foreground/90">{inspectedEvent.description}</p>
+            <p className="text-sm leading-relaxed text-foreground/90">
+              {inspectedEvent.description}
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -106,21 +120,27 @@ export function EventDetailSheet() {
               <div className="space-y-1">
                 <div className="flex justify-between">
                   <span>Semantic Similarity</span>
-                  <span className="tabular-nums">{Math.round(inspectedEvent.semanticScore * 100)}%</span>
+                  <span className="tabular-nums">
+                    {Math.round(inspectedEvent.semanticScore * 100)}%
+                  </span>
                 </div>
                 <Progress value={inspectedEvent.semanticScore * 100} className="h-1.5" />
               </div>
               <div className="space-y-1">
                 <div className="flex justify-between">
                   <span>Keyword Relevance</span>
-                  <span className="tabular-nums">{Math.round(inspectedEvent.keywordScore * 100)}%</span>
+                  <span className="tabular-nums">
+                    {Math.round(inspectedEvent.keywordScore * 100)}%
+                  </span>
                 </div>
                 <Progress value={inspectedEvent.keywordScore * 100} className="h-1.5" />
               </div>
               <div className="space-y-1">
                 <div className="flex justify-between">
                   <span>Metadata Alignment</span>
-                  <span className="tabular-nums">{Math.round(inspectedEvent.metadataScore * 100)}%</span>
+                  <span className="tabular-nums">
+                    {Math.round(inspectedEvent.metadataScore * 100)}%
+                  </span>
                 </div>
                 <Progress value={inspectedEvent.metadataScore * 100} className="h-1.5" />
               </div>
@@ -144,7 +164,9 @@ export function EventDetailSheet() {
               size="sm"
               className="gap-1.5"
               onClick={() => {
-                setPendingChatPrompt(`Find similar events to "${inspectedEvent.title}" and compare them`);
+                setPendingChatPrompt(
+                  `Find similar events to "${inspectedEvent.title}" and compare them`,
+                );
                 setInspectedEvent(null);
               }}
             >

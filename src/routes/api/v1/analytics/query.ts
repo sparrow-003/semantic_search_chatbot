@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { filtersSchema } from "@/lib/events/filters";
+import { filtersSchema, sanitizeFilters } from "@/lib/events/filters";
 import { SEARCH_MODES } from "@/lib/events/types";
 
 const querySchema = z.object({
@@ -36,7 +36,7 @@ export const Route = createFileRoute("/api/v1/analytics/query")({
           const result = await runAuthorizedAggregate({
             query: parsed.data.query,
             mode: parsed.data.mode,
-            ...(parsed.data.filters ? { filters: parsed.data.filters } : {}),
+            ...(parsed.data.filters ? { filters: sanitizeFilters(parsed.data.filters) } : {}),
             ...(parsed.data.eventIds ? { eventIds: parsed.data.eventIds } : {}),
             workspaceId: parsed.data.workspaceId ?? null,
             dimensions: ["category", "technology", "format", "month"],

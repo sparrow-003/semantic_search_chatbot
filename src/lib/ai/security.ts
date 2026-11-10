@@ -1,12 +1,24 @@
 import type { EventRecord, RankedEvent } from "@/lib/events/types";
 
 const INJECTION_PATTERNS: Array<{ name: string; re: RegExp }> = [
-  { name: "ignore_instructions", re: /\b(ignore|disregard|forget|override)\b.{0,40}\b(previous|prior|system|developer|all)\b.{0,24}\b(instructions?|prompts?|rules?)\b/i },
+  {
+    name: "ignore_instructions",
+    re: /\b(ignore|disregard|forget|override)\b.{0,40}\b(previous|prior|system|developer|all)\b.{0,24}\b(instructions?|prompts?|rules?)\b/i,
+  },
   { name: "role_spoof", re: /^\s*(system|developer|assistant)\s*:/im },
-  { name: "reveal_secrets", re: /\b(reveal|print|dump|leak|show)\b.{0,40}\b(api[_\s-]?key|secret|password|service[_\s-]?role|system\s+prompt|env)\b/i },
-  { name: "sql_injection_probe", re: /\b(union\s+select|drop\s+table|;\s*delete\s+from|xp_cmdshell|pg_sleep\s*\()\b/i },
+  {
+    name: "reveal_secrets",
+    re: /\b(reveal|print|dump|leak|show)\b.{0,40}\b(api[_\s-]?key|secret|password|service[_\s-]?role|system\s+prompt|env)\b/i,
+  },
+  {
+    name: "sql_injection_probe",
+    re: /\b(union\s+select|drop\s+table|;\s*delete\s+from|xp_cmdshell|pg_sleep\s*\()\b/i,
+  },
   { name: "script_execution", re: /<\s*script\b|javascript:|eval\s*\(|Function\s*\(/i },
-  { name: "cross_tenant_probe", re: /\b(all\s+tenants?|other\s+tenant|bypass\s+rls|disable\s+rls)\b/i },
+  {
+    name: "cross_tenant_probe",
+    re: /\b(all\s+tenants?|other\s+tenant|bypass\s+rls|disable\s+rls)\b/i,
+  },
 ];
 
 export interface InjectionScanResult {
@@ -30,11 +42,22 @@ export function detectPromptInjection(text: string): InjectionScanResult {
 
 /** Trim, normalize control characters, and enforce the 2,000-character query budget. */
 export function sanitizeUserQuery(raw: string): string {
-  return raw
-    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 2000);
+  let cleaned = "";
+  for (let i = 0; i < raw.length; i++) {
+    const code = raw.charCodeAt(i);
+    if (
+      (code >= 0 && code <= 8) ||
+      code === 11 ||
+      code === 12 ||
+      (code >= 14 && code <= 31) ||
+      code === 127
+    ) {
+      cleaned += " ";
+    } else {
+      cleaned += raw[i]!;
+    }
+  }
+  return cleaned.replace(/\s+/g, " ").trim().slice(0, 2000);
 }
 
 function escapeXmlDelimiters(value: string): string {

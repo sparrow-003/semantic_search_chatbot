@@ -37,7 +37,12 @@ interface MetricsResponse {
   rateLimitedCount: number;
   securityFlaggedCount: number;
   topTechnologies: Array<{ label: string; count: number }>;
-  recentFeedback: Array<{ rating: string; query: string | null; comment: string | null; createdAt: string }>;
+  recentFeedback: Array<{
+    rating: string;
+    query: string | null;
+    comment: string | null;
+    createdAt: string;
+  }>;
   embeddingStatus: {
     total: number;
     indexed: number;
@@ -55,7 +60,11 @@ function AdminObservabilityPage() {
   const { activeWorkspaceId } = useWorkspace();
   const [indexing, setIndexing] = useState(false);
 
-  const { data: metrics, isLoading, refetch } = useQuery({
+  const {
+    data: metrics,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["admin-metrics", activeWorkspaceId],
     queryFn: () =>
       apiFetch<MetricsResponse>(
@@ -69,14 +78,23 @@ function AdminObservabilityPage() {
     setIndexing(true);
     try {
       const endpoint = force ? "/api/v1/embeddings/reindex" : "/api/v1/embeddings/generate";
-      const res = await apiFetch<{ indexed: number; failed: number; skippedUnchanged: number }>(endpoint, {
-        method: "POST",
-        body: JSON.stringify({ workspaceId: activeWorkspaceId, force, limit: 60 }),
-      });
+      const res = await apiFetch<{ indexed: number; failed: number; skippedUnchanged: number }>(
+        endpoint,
+        {
+          method: "POST",
+          body: JSON.stringify({ workspaceId: activeWorkspaceId, force, limit: 60 }),
+        },
+      );
       await queryClient.invalidateQueries({ queryKey: ["admin-metrics"] });
-      toast.success(`Indexed ${res.indexed}, skipped ${res.skippedUnchanged}, failed ${res.failed}`);
+      toast.success(
+        `Indexed ${res.indexed}, skipped ${res.skippedUnchanged}, failed ${res.failed}`,
+      );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Indexing requires editor/platform_admin & server keys");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Indexing requires editor/platform_admin & server keys",
+      );
     } finally {
       setIndexing(false);
     }
@@ -90,12 +108,21 @@ function AdminObservabilityPage() {
       <div className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Observability &amp; Vector Index Health</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Observability &amp; Vector Index Health
+            </h1>
             <p className="text-xs text-muted-foreground">
-              Monitor search latency, embedding indexing status, AI token expenditure, UI validation, and security events.
+              Monitor search latency, embedding indexing status, AI token expenditure, UI
+              validation, and security events.
             </p>
           </div>
-          <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => void refetch()}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs"
+            onClick={() => void refetch()}
+          >
             <RefreshCw className="size-3.5" /> Refresh Metrics
           </Button>
         </div>
@@ -104,7 +131,8 @@ function AdminObservabilityPage() {
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline">Scope: {metrics.scope}</Badge>
             <Badge variant={emb?.providerConfigured ? "default" : "secondary"}>
-              AI Gateway: {emb?.providerConfigured ? "Configured" : "Fallback Mode (No LOVABLE_API_KEY)"}
+              AI Gateway:{" "}
+              {emb?.providerConfigured ? "Configured" : "Fallback Mode (No LOVABLE_API_KEY)"}
             </Badge>
             <Badge variant={emb?.adminWritesConfigured ? "default" : "secondary"}>
               Admin Index Writes: {emb?.adminWritesConfigured ? "Ready" : "Read-only Local"}
@@ -121,7 +149,9 @@ function AdminObservabilityPage() {
               <Card>
                 <CardContent className="p-4">
                   <div className="text-xs text-muted-foreground">Search Requests</div>
-                  <div className="mt-1 text-2xl font-bold tabular-nums">{metrics.searchRequests}</div>
+                  <div className="mt-1 text-2xl font-bold tabular-nums">
+                    {metrics.searchRequests}
+                  </div>
                   <div className="text-[11px] text-muted-foreground">
                     Success rate: {metrics.searchSuccessRate}%
                   </div>
@@ -130,7 +160,9 @@ function AdminObservabilityPage() {
               <Card>
                 <CardContent className="p-4">
                   <div className="text-xs text-muted-foreground">p95 Search Latency</div>
-                  <div className="mt-1 text-2xl font-bold tabular-nums">{metrics.p95LatencyMs} ms</div>
+                  <div className="mt-1 text-2xl font-bold tabular-nums">
+                    {metrics.p95LatencyMs} ms
+                  </div>
                   <div className="text-[11px] text-muted-foreground">
                     Avg: {metrics.avgLatencyMs} ms
                   </div>
@@ -165,10 +197,12 @@ function AdminObservabilityPage() {
               <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-3">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-base">
-                    <Database className="size-4 text-primary" /> Vector Embedding Index ({emb?.embeddingModel})
+                    <Database className="size-4 text-primary" /> Vector Embedding Index (
+                    {emb?.embeddingModel})
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Tracks SHA-256 content hashes in pgvector(768) to avoid duplicate embedding calls.
+                    Tracks SHA-256 content hashes in pgvector(768) to avoid duplicate embedding
+                    calls.
                   </CardDescription>
                 </div>
                 <div className="flex gap-2">
@@ -221,7 +255,8 @@ function AdminObservabilityPage() {
                   <Alert>
                     <AlertDescription className="text-xs">
                       Full pgvector embedding indexing requires <code>LOVABLE_API_KEY</code> and{" "}
-                      <code>SUPABASE_SERVICE_ROLE_KEY</code> on the server. When absent, keyword + metadata search operates cleanly without fabricating semantic scores.
+                      <code>SUPABASE_SERVICE_ROLE_KEY</code> on the server. When absent, keyword +
+                      metadata search operates cleanly without fabricating semantic scores.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -259,7 +294,9 @@ function AdminObservabilityPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Prompt-injection flags</span>
-                    <span className="font-semibold tabular-nums">{metrics.securityFlaggedCount}</span>
+                    <span className="font-semibold tabular-nums">
+                      {metrics.securityFlaggedCount}
+                    </span>
                   </div>
                 </CardContent>
               </Card>
@@ -274,7 +311,9 @@ function AdminObservabilityPage() {
                   {metrics.topTechnologies.map((t) => (
                     <div key={t.label} className="flex items-center justify-between">
                       <span>{t.label}</span>
-                      <Badge variant="secondary" className="tabular-nums">{t.count} events</Badge>
+                      <Badge variant="secondary" className="tabular-nums">
+                        {t.count} events
+                      </Badge>
                     </div>
                   ))}
                 </CardContent>

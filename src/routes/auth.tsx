@@ -151,7 +151,9 @@ function AuthPage() {
           {resetMode ? (
             <form onSubmit={handlePasswordReset} className="space-y-3">
               <div className="space-y-1.5">
-                <Label htmlFor="reset-email" className="text-xs">Account Email</Label>
+                <Label htmlFor="reset-email" className="text-xs">
+                  Account Email
+                </Label>
                 <Input
                   id="reset-email"
                   type="email"
@@ -177,14 +179,20 @@ function AuthPage() {
           ) : (
             <Tabs defaultValue="signin">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin" className="text-xs">Sign In</TabsTrigger>
-                <TabsTrigger value="signup" className="text-xs">Create Account</TabsTrigger>
+                <TabsTrigger value="signin" className="text-xs">
+                  Sign In
+                </TabsTrigger>
+                <TabsTrigger value="signup" className="text-xs">
+                  Create Account
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="signin" className="mt-4">
                 <form onSubmit={handleSignIn} className="space-y-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="signin-email" className="text-xs">Email</Label>
+                    <Label htmlFor="signin-email" className="text-xs">
+                      Email
+                    </Label>
                     <Input
                       id="signin-email"
                       type="email"
@@ -195,7 +203,9 @@ function AuthPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="signin-password" className="text-xs">Password</Label>
+                    <Label htmlFor="signin-password" className="text-xs">
+                      Password
+                    </Label>
                     <Input
                       id="signin-password"
                       type="password"
@@ -220,7 +230,9 @@ function AuthPage() {
               <TabsContent value="signup" className="mt-4">
                 <form onSubmit={handleSignUp} className="space-y-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="signup-name" className="text-xs">Display Name</Label>
+                    <Label htmlFor="signup-name" className="text-xs">
+                      Display Name
+                    </Label>
                     <Input
                       id="signup-name"
                       type="text"
@@ -230,7 +242,9 @@ function AuthPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="signup-email" className="text-xs">Email</Label>
+                    <Label htmlFor="signup-email" className="text-xs">
+                      Email
+                    </Label>
                     <Input
                       id="signup-email"
                       type="email"
@@ -241,7 +255,9 @@ function AuthPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="signup-password" className="text-xs">Password (min 8 chars)</Label>
+                    <Label htmlFor="signup-password" className="text-xs">
+                      Password (min 8 chars)
+                    </Label>
                     <Input
                       id="signup-password"
                       type="password"

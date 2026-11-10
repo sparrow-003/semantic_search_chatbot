@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Copy,
-  FileBarChart2,
-  LayoutDashboard,
-  Plus,
-  Sparkles,
-  Trash2,
-} from "lucide-react";
+import { Copy, FileBarChart2, LayoutDashboard, Plus, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { apiFetch, type SavedDashboardItem } from "@/lib/client/api";
 import { useWorkspace } from "@/lib/client/workspace-context";
@@ -51,8 +51,22 @@ const REPORT_TEMPLATES: Array<{
         { id: "k1", kind: "metric", title: "Matching Events", colSpan: 4, metricKey: "total" },
         { id: "k2", kind: "metric", title: "Online Events", colSpan: 4, metricKey: "online" },
         { id: "k3", kind: "metric", title: "Free Entry", colSpan: 4, metricKey: "free" },
-        { id: "c1", kind: "chart", title: "By Category", colSpan: 6, chartType: "bar", dimension: "category" },
-        { id: "c2", kind: "chart", title: "By Technology", colSpan: 6, chartType: "horizontal_bar", dimension: "technology" },
+        {
+          id: "c1",
+          kind: "chart",
+          title: "By Category",
+          colSpan: 6,
+          chartType: "bar",
+          dimension: "category",
+        },
+        {
+          id: "c2",
+          kind: "chart",
+          title: "By Technology",
+          colSpan: 6,
+          chartType: "horizontal_bar",
+          dimension: "technology",
+        },
         { id: "t1", kind: "table", title: "Scheduled Events", colSpan: 12 },
       ],
     },
@@ -77,8 +91,22 @@ const REPORT_TEMPLATES: Array<{
         { id: "k1", kind: "metric", title: "Total AI Events", colSpan: 4, metricKey: "total" },
         { id: "k2", kind: "metric", title: "Online", colSpan: 4, metricKey: "online" },
         { id: "k3", kind: "metric", title: "In Person", colSpan: 4, metricKey: "inPerson" },
-        { id: "c1", kind: "chart", title: "Format Split", colSpan: 6, chartType: "donut", dimension: "format" },
-        { id: "c2", kind: "chart", title: "Monthly Pipeline", colSpan: 6, chartType: "line", dimension: "month" },
+        {
+          id: "c1",
+          kind: "chart",
+          title: "Format Split",
+          colSpan: 6,
+          chartType: "donut",
+          dimension: "format",
+        },
+        {
+          id: "c2",
+          kind: "chart",
+          title: "Monthly Pipeline",
+          colSpan: 6,
+          chartType: "line",
+          dimension: "month",
+        },
         { id: "t1", kind: "table", title: "AI Events Directory", colSpan: 12 },
       ],
     },
@@ -103,10 +131,38 @@ const REPORT_TEMPLATES: Array<{
         { id: "k1", kind: "metric", title: "Total Events", colSpan: 4, metricKey: "total" },
         { id: "k2", kind: "metric", title: "Upcoming", colSpan: 4, metricKey: "upcoming" },
         { id: "k3", kind: "metric", title: "Free Events", colSpan: 4, metricKey: "free" },
-        { id: "c1", kind: "chart", title: "Categories", colSpan: 6, chartType: "bar", dimension: "category" },
-        { id: "c2", kind: "chart", title: "Top Technologies", colSpan: 6, chartType: "horizontal_bar", dimension: "technology" },
-        { id: "c3", kind: "chart", title: "Cities", colSpan: 6, chartType: "pie", dimension: "city" },
-        { id: "c4", kind: "chart", title: "Monthly Trend", colSpan: 6, chartType: "area", dimension: "month" },
+        {
+          id: "c1",
+          kind: "chart",
+          title: "Categories",
+          colSpan: 6,
+          chartType: "bar",
+          dimension: "category",
+        },
+        {
+          id: "c2",
+          kind: "chart",
+          title: "Top Technologies",
+          colSpan: 6,
+          chartType: "horizontal_bar",
+          dimension: "technology",
+        },
+        {
+          id: "c3",
+          kind: "chart",
+          title: "Cities",
+          colSpan: 6,
+          chartType: "pie",
+          dimension: "city",
+        },
+        {
+          id: "c4",
+          kind: "chart",
+          title: "Monthly Trend",
+          colSpan: 6,
+          chartType: "area",
+          dimension: "month",
+        },
         { id: "t1", kind: "table", title: "All Events", colSpan: 12 },
       ],
     },
@@ -116,8 +172,14 @@ const REPORT_TEMPLATES: Array<{
 function DashboardsIndexPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user, workspaces, activeWorkspaceId, localDashboards, saveLocalDashboard, deleteLocalDashboard } =
-    useWorkspace();
+  const {
+    user,
+    workspaces,
+    activeWorkspaceId,
+    localDashboards,
+    saveLocalDashboard,
+    deleteLocalDashboard,
+  } = useWorkspace();
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
 
@@ -162,7 +224,7 @@ function DashboardsIndexPage() {
     }
   };
 
-  const dashboards = user ? remoteData?.dashboards ?? [] : localDashboards;
+  const dashboards = user ? (remoteData?.dashboards ?? []) : localDashboards;
 
   return (
     <AppShell>
@@ -196,7 +258,12 @@ function DashboardsIndexPage() {
               onChange={(e) => setNewName(e.target.value)}
               className="h-9 w-56 text-xs"
             />
-            <Button type="submit" size="sm" disabled={creating || !newName.trim()} className="gap-1.5">
+            <Button
+              type="submit"
+              size="sm"
+              disabled={creating || !newName.trim()}
+              className="gap-1.5"
+            >
               <Plus className="size-3.5" /> Create
             </Button>
           </form>
@@ -251,7 +318,9 @@ function DashboardsIndexPage() {
                           className="size-8"
                           title="Duplicate dashboard"
                           onClick={async () => {
-                            await apiFetch(`/api/v1/dashboards/${d.id}/duplicate`, { method: "POST" });
+                            await apiFetch(`/api/v1/dashboards/${d.id}/duplicate`, {
+                              method: "POST",
+                            });
                             await queryClient.invalidateQueries({ queryKey: ["saved-dashboards"] });
                             toast.success("Dashboard duplicated");
                           }}

@@ -1,12 +1,5 @@
 import { useMemo, useState } from "react";
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  Columns3,
-  Download,
-  Search,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Columns3, Download, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -148,9 +141,7 @@ export function DataTableBlock({ props }: { props: DataTableProps }) {
     });
   };
 
-  const exportRows = selectedIds.size
-    ? filtered.filter((e) => selectedIds.has(e.id))
-    : filtered;
+  const exportRows = selectedIds.size ? filtered.filter((e) => selectedIds.has(e.id)) : filtered;
 
   const isSortable = (c: TableColumnKey): c is DataTableConfig["sortBy"] =>
     c === "title" || c === "category" || c === "format" || c === "startAt" || c === "score";
@@ -170,7 +161,11 @@ export function DataTableBlock({ props }: { props: DataTableProps }) {
               size="sm"
               className="h-8 gap-1.5 text-xs"
               onClick={() =>
-                triggerDownload("events-export.csv", eventsToCsv(exportRows as RankedEvent[]), "text/csv;charset=utf-8")
+                triggerDownload(
+                  "events-export.csv",
+                  eventsToCsv(exportRows as RankedEvent[]),
+                  "text/csv;charset=utf-8",
+                )
               }
             >
               <Download className="size-3.5" />
@@ -227,7 +222,10 @@ export function DataTableBlock({ props }: { props: DataTableProps }) {
             </SelectContent>
           </Select>
 
-          <Select value={groupBy} onValueChange={(v) => setGroupBy(v as DataTableConfig["groupBy"])}>
+          <Select
+            value={groupBy}
+            onValueChange={(v) => setGroupBy(v as DataTableConfig["groupBy"])}
+          >
             <SelectTrigger className="h-8 w-[135px] text-xs" aria-label="Group rows by">
               <SelectValue placeholder="Group by" />
             </SelectTrigger>
@@ -334,7 +332,10 @@ export function DataTableBlock({ props }: { props: DataTableProps }) {
                   <>
                     {grp.group && (
                       <TableRow key={`grp-${grp.group}`} className="bg-muted/50 hover:bg-muted/50">
-                        <TableCell colSpan={visibleCols.length + 1} className="py-1.5 text-xs font-semibold">
+                        <TableCell
+                          colSpan={visibleCols.length + 1}
+                          className="py-1.5 text-xs font-semibold"
+                        >
                           {grp.group} ({grp.rows.length})
                         </TableCell>
                       </TableRow>
@@ -371,9 +372,13 @@ export function DataTableBlock({ props }: { props: DataTableProps }) {
                               </button>
                             )}
                             {col === "category" && <Badge variant="secondary">{ev.category}</Badge>}
-                            {col === "format" && <Badge variant="outline">{FORMAT_LABELS[ev.format]}</Badge>}
+                            {col === "format" && (
+                              <Badge variant="outline">{FORMAT_LABELS[ev.format]}</Badge>
+                            )}
                             {col === "startAt" && (
-                              <span className="whitespace-nowrap tabular-nums">{ev.startAt.slice(0, 10)}</span>
+                              <span className="whitespace-nowrap tabular-nums">
+                                {ev.startAt.slice(0, 10)}
+                              </span>
                             )}
                             {col === "endAt" && (
                               <span className="whitespace-nowrap tabular-nums">
@@ -381,12 +386,19 @@ export function DataTableBlock({ props }: { props: DataTableProps }) {
                               </span>
                             )}
                             {col === "location" && (
-                              <span>{ev.city ? `${ev.city}${ev.country ? `, ${ev.country}` : ""}` : ev.venue ?? "Online"}</span>
+                              <span>
+                                {ev.city
+                                  ? `${ev.city}${ev.country ? `, ${ev.country}` : ""}`
+                                  : (ev.venue ?? "Online")}
+                              </span>
                             )}
                             {col === "technologies" && (
                               <div className="flex max-w-[220px] flex-wrap gap-1">
                                 {ev.technologies.slice(0, 4).map((t) => (
-                                  <span key={t} className="rounded bg-muted px-1.5 py-0.5 text-[11px]">
+                                  <span
+                                    key={t}
+                                    className="rounded bg-muted px-1.5 py-0.5 text-[11px]"
+                                  >
                                     {t}
                                   </span>
                                 ))}
@@ -400,7 +412,9 @@ export function DataTableBlock({ props }: { props: DataTableProps }) {
                               </span>
                             )}
                             {col === "description" && (
-                              <span className="line-clamp-2 max-w-xs text-muted-foreground">{ev.summary}</span>
+                              <span className="line-clamp-2 max-w-xs text-muted-foreground">
+                                {ev.summary}
+                              </span>
                             )}
                             {col === "explanation" && (
                               <span className="line-clamp-2 max-w-xs text-muted-foreground">

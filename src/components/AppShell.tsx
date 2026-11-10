@@ -317,7 +317,9 @@ export function AppShell({
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1 text-left group-data-[collapsible=icon]:hidden">
-                    <div className="truncate text-xs font-medium">{profile?.displayName ?? "User"}</div>
+                    <div className="truncate text-xs font-medium">
+                      {profile?.displayName ?? "User"}
+                    </div>
                     <div className="truncate text-[10px] text-muted-foreground">{user.email}</div>
                   </div>
                 </Button>
@@ -345,7 +347,12 @@ export function AppShell({
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild size="sm" variant="outline" className="w-full justify-start gap-2 text-xs">
+            <Button
+              asChild
+              size="sm"
+              variant="outline"
+              className="w-full justify-start gap-2 text-xs"
+            >
               <Link to="/auth">
                 <LogIn className="size-3.5 shrink-0" />
                 <span className="group-data-[collapsible=icon]:hidden">Sign in / Save work</span>

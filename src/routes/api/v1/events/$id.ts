@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { EVENT_FORMATS } from "@/lib/events/types";
 
 const patchEventSchema = z.object({
@@ -30,12 +31,10 @@ export const Route = createFileRoute("/api/v1/events/$id")({
   server: {
     handlers: {
       PATCH: async ({ request, params }) => {
-        const { errorResponse, jsonResponse, readBoundedJson } = await import(
-          "@/lib/server/rate-limit.server"
-        );
-        const { resolveAuthContext, isValidUuid, hasAdminCredentials, HttpError } = await import(
-          "@/lib/server/supabase.server"
-        );
+        const { errorResponse, jsonResponse, readBoundedJson } =
+          await import("@/lib/server/rate-limit.server");
+        const { resolveAuthContext, isValidUuid, hasAdminCredentials, HttpError } =
+          await import("@/lib/server/supabase.server");
         const { indexEventsBatch } = await import("@/lib/server/indexing.server");
 
         try {
@@ -43,26 +42,30 @@ export const Route = createFileRoute("/api/v1/events/$id")({
           if (!isValidUuid(params.id)) throw new HttpError(400, "invalid_id", "Invalid event ID.");
           const parsed = patchEventSchema.safeParse(await readBoundedJson(request));
           if (!parsed.success) {
-            throw new HttpError(400, "invalid_request", parsed.error.issues[0]?.message ?? "Invalid event update.");
+            throw new HttpError(
+              400,
+              "invalid_request",
+              parsed.error.issues[0]?.message ?? "Invalid event update.",
+            );
           }
 
           const d = parsed.data;
-          const upd: Record<string, unknown> = {};
-          if (d.title !== undefined) upd["title"] = d.title;
-          if (d.summary !== undefined) upd["summary"] = d.summary;
-          if (d.description !== undefined) upd["description"] = d.description;
-          if (d.category !== undefined) upd["category"] = d.category;
-          if (d.format !== undefined) upd["format"] = d.format;
-          if (d.startAt !== undefined) upd["start_at"] = d.startAt;
-          if (d.endAt !== undefined) upd["end_at"] = d.endAt;
-          if (d.venue !== undefined) upd["venue"] = d.venue;
-          if (d.city !== undefined) upd["city"] = d.city;
-          if (d.country !== undefined) upd["country"] = d.country;
-          if (d.registrationUrl !== undefined) upd["registration_url"] = d.registrationUrl;
-          if (d.technologies !== undefined) upd["technologies"] = d.technologies;
-          if (d.audience !== undefined) upd["audience"] = d.audience;
-          if (d.isFree !== undefined) upd["is_free"] = d.isFree;
-          if (d.status !== undefined) upd["status"] = d.status;
+          const upd: TablesUpdate<"events"> = {};
+          if (d.title !== undefined) upd.title = d.title;
+          if (d.summary !== undefined) upd.summary = d.summary;
+          if (d.description !== undefined) upd.description = d.description;
+          if (d.category !== undefined) upd.category = d.category;
+          if (d.format !== undefined) upd.format = d.format;
+          if (d.startAt !== undefined) upd.start_at = d.startAt;
+          if (d.endAt !== undefined) upd.end_at = d.endAt;
+          if (d.venue !== undefined) upd.venue = d.venue;
+          if (d.city !== undefined) upd.city = d.city;
+          if (d.country !== undefined) upd.country = d.country;
+          if (d.registrationUrl !== undefined) upd.registration_url = d.registrationUrl;
+          if (d.technologies !== undefined) upd.technologies = d.technologies;
+          if (d.audience !== undefined) upd.audience = d.audience;
+          if (d.isFree !== undefined) upd.is_free = d.isFree;
+          if (d.status !== undefined) upd.status = d.status;
 
           const { data, error } = await auth!.client
             .from("events")
@@ -90,9 +93,8 @@ export const Route = createFileRoute("/api/v1/events/$id")({
 
       DELETE: async ({ request, params }) => {
         const { errorResponse, jsonResponse } = await import("@/lib/server/rate-limit.server");
-        const { resolveAuthContext, isValidUuid, HttpError } = await import(
-          "@/lib/server/supabase.server"
-        );
+        const { resolveAuthContext, isValidUuid, HttpError } =
+          await import("@/lib/server/supabase.server");
         try {
           const auth = await resolveAuthContext(request, { required: true });
           if (!isValidUuid(params.id)) throw new HttpError(400, "invalid_id", "Invalid event ID.");

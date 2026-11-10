@@ -46,7 +46,9 @@ function ResetPasswordPage() {
         <CardContent>
           <form onSubmit={handleUpdate} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="new-pw" className="text-xs">New Password (min 8 characters)</Label>
+              <Label htmlFor="new-pw" className="text-xs">
+                New Password (min 8 characters)
+              </Label>
               <Input
                 id="new-pw"
                 type="password"

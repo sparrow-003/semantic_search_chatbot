@@ -5,9 +5,8 @@ export const Route = createFileRoute("/api/v1/health")({
     handlers: {
       GET: async () => {
         const { jsonResponse } = await import("@/lib/server/rate-limit.server");
-        const { isGatewayConfigured, ALLOWED_CHAT_MODELS, DEFAULT_CHAT_MODEL } = await import(
-          "@/lib/server/providers.server"
-        );
+        const { isGatewayConfigured, ALLOWED_CHAT_MODELS, DEFAULT_CHAT_MODEL } =
+          await import("@/lib/server/providers.server");
         const { hasAdminCredentials } = await import("@/lib/server/supabase.server");
         return jsonResponse({
           ok: true,

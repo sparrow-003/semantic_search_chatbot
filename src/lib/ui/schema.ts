@@ -238,7 +238,9 @@ export const diagramNodeSchema = z
     id: z.string().min(1).max(48),
     label: z.string().min(1).max(100),
     description: z.string().max(300).optional(),
-    kind: z.enum(["input", "process", "storage", "service", "decision", "output", "actor", "note"]).default("process"),
+    kind: z
+      .enum(["input", "process", "storage", "service", "decision", "output", "actor", "note"])
+      .default("process"),
     layer: z.number().int().min(0).max(12).optional(),
     x: z.number().finite().optional(),
     y: z.number().finite().optional(),
@@ -290,7 +292,9 @@ export const formFieldSchema = z
     helpText: z.string().max(200).optional(),
     required: z.boolean().optional(),
     step: z.number().int().min(1).max(5).optional(),
-    defaultValue: z.union([z.string().max(200), z.number(), z.boolean(), z.array(z.string().max(80)).max(20)]).optional(),
+    defaultValue: z
+      .union([z.string().max(200), z.number(), z.boolean(), z.array(z.string().max(80)).max(20)])
+      .optional(),
     options: z.array(formOptionSchema).max(100).optional(),
     min: z.number().optional(),
     max: z.number().optional(),

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { filtersSchema } from "@/lib/events/filters";
+import { filtersSchema, sanitizeFilters } from "@/lib/events/filters";
 
 const semanticBodySchema = z.object({
   query: z.string().min(1).max(1000),
@@ -29,12 +29,16 @@ export const Route = createFileRoute("/api/v1/search/semantic")({
           checkRateLimit(getClientKey(request, auth?.userId), RATE_LIMITS.search);
           const body = semanticBodySchema.safeParse(await readBoundedJson(request));
           if (!body.success) {
-            throw new HttpError(400, "invalid_request", body.error.issues[0]?.message ?? "Invalid semantic search request.");
+            throw new HttpError(
+              400,
+              "invalid_request",
+              body.error.issues[0]?.message ?? "Invalid semantic search request.",
+            );
           }
           const result = await executeSearch({
             query: body.data.query,
             mode: "semantic",
-            ...(body.data.filters ? { filters: body.data.filters } : {}),
+            ...(body.data.filters ? { filters: sanitizeFilters(body.data.filters) } : {}),
             workspaceId: body.data.workspaceId ?? null,
             limit: body.data.limit ?? 24,
             auth,

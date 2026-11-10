@@ -4,19 +4,19 @@ export const Route = createFileRoute("/api/v1/search/history")({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const { errorResponse, jsonResponse, getTelemetryEvents } = await import(
-          "@/lib/server/rate-limit.server"
-        );
-        const { resolveAuthContext, getAdminSupabaseClientOptional } = await import(
-          "@/lib/server/supabase.server"
-        );
+        const { errorResponse, jsonResponse, getTelemetryEvents } =
+          await import("@/lib/server/rate-limit.server");
+        const { resolveAuthContext, getAdminSupabaseClientOptional } =
+          await import("@/lib/server/supabase.server");
         try {
           const auth = await resolveAuthContext(request);
           const admin = await getAdminSupabaseClientOptional();
           if (auth && admin) {
             const { data } = await admin
               .from("search_queries")
-              .select("id, query, intent, filters, result_count, low_confidence, latency_ms, status, created_at")
+              .select(
+                "id, query, intent, filters, result_count, low_confidence, latency_ms, status, created_at",
+              )
               .eq("user_id", auth.userId)
               .order("created_at", { ascending: false })
               .limit(30);

@@ -90,7 +90,12 @@ export interface ObservabilityMetrics {
   rateLimitedCount: number;
   securityFlaggedCount: number;
   topTechnologies: Array<{ label: string; count: number }>;
-  recentFeedback: Array<{ rating: string; query: string | null; comment: string | null; createdAt: string }>;
+  recentFeedback: Array<{
+    rating: string;
+    query: string | null;
+    comment: string | null;
+    createdAt: string;
+  }>;
   embeddingStatus: Awaited<ReturnType<typeof getEmbeddingStatus>>;
 }
 

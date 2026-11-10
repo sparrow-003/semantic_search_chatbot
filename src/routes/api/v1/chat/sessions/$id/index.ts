@@ -11,12 +11,12 @@ export const Route = createFileRoute("/api/v1/chat/sessions/$id/")({
     handlers: {
       GET: async ({ request, params }) => {
         const { errorResponse, jsonResponse } = await import("@/lib/server/rate-limit.server");
-        const { resolveAuthContext, isValidUuid, HttpError } = await import(
-          "@/lib/server/supabase.server"
-        );
+        const { resolveAuthContext, isValidUuid, HttpError } =
+          await import("@/lib/server/supabase.server");
         try {
           const auth = await resolveAuthContext(request, { required: true });
-          if (!isValidUuid(params.id)) throw new HttpError(400, "invalid_id", "Invalid session ID.");
+          if (!isValidUuid(params.id))
+            throw new HttpError(400, "invalid_id", "Invalid session ID.");
           const { data, error } = await auth!.client
             .from("chat_sessions")
             .select("id, title, is_saved, tenant_id, created_at, updated_at")
@@ -31,17 +31,17 @@ export const Route = createFileRoute("/api/v1/chat/sessions/$id/")({
       },
 
       PATCH: async ({ request, params }) => {
-        const { errorResponse, jsonResponse, readBoundedJson } = await import(
-          "@/lib/server/rate-limit.server"
-        );
-        const { resolveAuthContext, isValidUuid, HttpError } = await import(
-          "@/lib/server/supabase.server"
-        );
+        const { errorResponse, jsonResponse, readBoundedJson } =
+          await import("@/lib/server/rate-limit.server");
+        const { resolveAuthContext, isValidUuid, HttpError } =
+          await import("@/lib/server/supabase.server");
         try {
           const auth = await resolveAuthContext(request, { required: true });
-          if (!isValidUuid(params.id)) throw new HttpError(400, "invalid_id", "Invalid session ID.");
+          if (!isValidUuid(params.id))
+            throw new HttpError(400, "invalid_id", "Invalid session ID.");
           const parsed = patchSessionSchema.safeParse(await readBoundedJson(request));
-          if (!parsed.success) throw new HttpError(400, "invalid_request", "Invalid update payload.");
+          if (!parsed.success)
+            throw new HttpError(400, "invalid_request", "Invalid update payload.");
 
           const updateData: { title?: string; is_saved?: boolean } = {};
           if (parsed.data.title !== undefined) updateData.title = parsed.data.title;
@@ -63,16 +63,13 @@ export const Route = createFileRoute("/api/v1/chat/sessions/$id/")({
 
       DELETE: async ({ request, params }) => {
         const { errorResponse, jsonResponse } = await import("@/lib/server/rate-limit.server");
-        const { resolveAuthContext, isValidUuid, HttpError } = await import(
-          "@/lib/server/supabase.server"
-        );
+        const { resolveAuthContext, isValidUuid, HttpError } =
+          await import("@/lib/server/supabase.server");
         try {
           const auth = await resolveAuthContext(request, { required: true });
-          if (!isValidUuid(params.id)) throw new HttpError(400, "invalid_id", "Invalid session ID.");
-          const { error } = await auth!.client
-            .from("chat_sessions")
-            .delete()
-            .eq("id", params.id);
+          if (!isValidUuid(params.id))
+            throw new HttpError(400, "invalid_id", "Invalid session ID.");
+          const { error } = await auth!.client.from("chat_sessions").delete().eq("id", params.id);
           if (error) throw new Error(error.message);
           return jsonResponse({ deleted: true });
         } catch (err) {

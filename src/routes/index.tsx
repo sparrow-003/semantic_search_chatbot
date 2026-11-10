@@ -41,11 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  apiFetch,
-  sendChatMessageStream,
-  submitSearchFeedback,
-} from "@/lib/client/api";
+import { apiFetch, sendChatMessageStream, submitSearchFeedback } from "@/lib/client/api";
 import {
   turnResultToAssistantMessage,
   useWorkspace,
@@ -150,9 +146,8 @@ function ChatWorkspacePage() {
           setSessionSaved(sessRes.session.is_saved);
           const hydrated: LocalChatMessage[] = msgRes.messages.map((m) => {
             const parts = Array.isArray(m.parts) ? m.parts : [];
-            const uiPart = parts.find(
-              (p): p is { type: "ui_response"; spec: UIResponse } =>
-                Boolean(p && typeof p === "object" && "type" in p && p.type === "ui_response"),
+            const uiPart = parts.find((p): p is { type: "ui_response"; spec: UIResponse } =>
+              Boolean(p && typeof p === "object" && "type" in p && p.type === "ui_response"),
             );
             return {
               id: m.id,
@@ -305,12 +300,23 @@ function ChatWorkspacePage() {
   const handleDynamicFormSubmit = (action: AllowedFormAction, values: Record<string, unknown>) => {
     if (action === "filter_search") {
       const q = typeof values["query"] === "string" ? values["query"].trim() : "";
-      const formats = Array.isArray(values["formats"]) ? (values["formats"] as SearchFilters["formats"]) : [];
-      const categories = Array.isArray(values["categories"]) ? (values["categories"] as string[]) : [];
-      const technologies = Array.isArray(values["technologies"]) ? (values["technologies"] as string[]) : [];
-      const city = typeof values["city"] === "string" && values["city"] ? values["city"] : null;
-      const dateStart = typeof values["dateStart"] === "string" && values["dateStart"] ? values["dateStart"] : null;
-      const dateEnd = typeof values["dateEnd"] === "string" && values["dateEnd"] ? values["dateEnd"] : null;
+      const formats = Array.isArray(values["formats"])
+        ? (values["formats"] as SearchFilters["formats"])
+        : [];
+      const categories = Array.isArray(values["categories"])
+        ? (values["categories"] as string[])
+        : [];
+      const technologies = Array.isArray(values["technologies"])
+        ? (values["technologies"] as string[])
+        : [];
+      const city =
+        typeof values["city"] === "string" && values["city"] && values["city"] !== "__any__"
+          ? values["city"]
+          : null;
+      const dateStart =
+        typeof values["dateStart"] === "string" && values["dateStart"] ? values["dateStart"] : null;
+      const dateEnd =
+        typeof values["dateEnd"] === "string" && values["dateEnd"] ? values["dateEnd"] : null;
 
       const summaryBits = [
         q || "all matching events",
@@ -406,7 +412,9 @@ function ChatWorkspacePage() {
                   className="h-6 gap-1 px-2 text-[11px]"
                   onClick={() => void toggleSaveSession()}
                 >
-                  <Bookmark className={`size-3 ${sessionSaved ? "fill-primary text-primary" : ""}`} />
+                  <Bookmark
+                    className={`size-3 ${sessionSaved ? "fill-primary text-primary" : ""}`}
+                  />
                   {sessionSaved ? "Saved" : "Save chat"}
                 </Button>
               )}
@@ -490,7 +498,9 @@ function ChatWorkspacePage() {
 
                       <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
                         <Badge variant="outline" className="text-[10px]">
-                          {msg.semanticAvailable ? "Hybrid Semantic + Keyword" : "Keyword + Metadata"}
+                          {msg.semanticAvailable
+                            ? "Hybrid Semantic + Keyword"
+                            : "Keyword + Metadata"}
                         </Badge>
                         {msg.lowConfidence && (
                           <Badge variant="secondary" className="text-[10px]">

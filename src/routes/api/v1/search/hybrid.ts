@@ -34,22 +34,24 @@ export const Route = createFileRoute("/api/v1/search/hybrid")({
           checkRateLimit(getClientKey(request, auth?.userId), RATE_LIMITS.search);
           const body = searchBodySchema.safeParse(await readBoundedJson(request));
           if (!body.success) {
-            throw new HttpError(400, "invalid_request", body.error.issues[0]?.message ?? "Invalid search request.");
+            throw new HttpError(
+              400,
+              "invalid_request",
+              body.error.issues[0]?.message ?? "Invalid search request.",
+            );
           }
 
-          const parsedIntent = body.data.query.trim()
-            ? parseUserIntent(body.data.query)
-            : null;
+          const parsedIntent = body.data.query.trim() ? parseUserIntent(body.data.query) : null;
           const mergedFilters = {
             formats: body.data.filters?.formats?.length
               ? body.data.filters.formats
-              : parsedIntent?.filters.formats ?? [],
+              : (parsedIntent?.filters.formats ?? []),
             categories: body.data.filters?.categories?.length
               ? body.data.filters.categories
-              : parsedIntent?.filters.categories ?? [],
+              : (parsedIntent?.filters.categories ?? []),
             technologies: body.data.filters?.technologies?.length
               ? body.data.filters.technologies
-              : parsedIntent?.filters.technologies ?? [],
+              : (parsedIntent?.filters.technologies ?? []),
             dateStart: body.data.filters?.dateStart ?? parsedIntent?.filters.dateStart ?? null,
             dateEnd: body.data.filters?.dateEnd ?? parsedIntent?.filters.dateEnd ?? null,
             city: body.data.filters?.city ?? parsedIntent?.filters.city ?? null,

@@ -84,7 +84,9 @@ export function EventCardsBlock({
       {(props.title || props.subtitle) && (
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
-            {props.title && <h3 className="text-sm font-semibold text-foreground">{props.title}</h3>}
+            {props.title && (
+              <h3 className="text-sm font-semibold text-foreground">{props.title}</h3>
+            )}
             {props.subtitle && <p className="text-xs text-muted-foreground">{props.subtitle}</p>}
           </div>
           <span className="text-xs text-muted-foreground tabular-nums">
@@ -93,7 +95,12 @@ export function EventCardsBlock({
         </div>
       )}
 
-      <div className={cn("grid gap-3", props.compact ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2 xl:grid-cols-3")}>
+      <div
+        className={cn(
+          "grid gap-3",
+          props.compact ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2 xl:grid-cols-3",
+        )}
+      >
         {visibleEvents.map((ev) => {
           const safeUrl = sanitizeExternalUrl(ev.registrationUrl);
           const isSaved = bookmarkedEventIds.includes(ev.id);
@@ -113,9 +120,12 @@ export function EventCardsBlock({
                       variant="outline"
                       className={cn(
                         "text-[11px]",
-                        ev.format === "online" && "border-emerald-500/40 text-emerald-700 dark:text-emerald-300",
-                        ev.format === "in_person" && "border-violet-500/40 text-violet-700 dark:text-violet-300",
-                        ev.format === "hybrid" && "border-amber-500/40 text-amber-700 dark:text-amber-300",
+                        ev.format === "online" &&
+                          "border-emerald-500/40 text-emerald-700 dark:text-emerald-300",
+                        ev.format === "in_person" &&
+                          "border-violet-500/40 text-violet-700 dark:text-violet-300",
+                        ev.format === "hybrid" &&
+                          "border-amber-500/40 text-amber-700 dark:text-amber-300",
                       )}
                     >
                       {FORMAT_LABELS[ev.format]}
@@ -161,7 +171,9 @@ export function EventCardsBlock({
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <MapPin className="size-3.5" />
-                    {ev.city ? `${ev.city}${ev.country ? `, ${ev.country}` : ""}` : ev.venue ?? "Virtual"}
+                    {ev.city
+                      ? `${ev.city}${ev.country ? `, ${ev.country}` : ""}`
+                      : (ev.venue ?? "Virtual")}
                   </span>
                 </div>
               </CardHeader>
@@ -217,7 +229,10 @@ export function EventCardsBlock({
                     type="button"
                     size="icon"
                     variant="ghost"
-                    className={cn("size-7", feedbackSent[ev.id] === "irrelevant" && "text-destructive")}
+                    className={cn(
+                      "size-7",
+                      feedbackSent[ev.id] === "irrelevant" && "text-destructive",
+                    )}
                     aria-label="Mark irrelevant"
                     onClick={() => handleFeedback(ev as RankedEvent, "irrelevant")}
                   >

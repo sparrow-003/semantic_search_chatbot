@@ -78,7 +78,11 @@ function SearchExplorerPage() {
     queryFn: () => loadFacets(activeWorkspaceId),
   });
 
-  const { data: searchData, isFetching, error } = useQuery({
+  const {
+    data: searchData,
+    isFetching,
+    error,
+  } = useQuery({
     queryKey: ["search-explorer", debouncedQuery, mode, filters, freeOnly, activeWorkspaceId],
     queryFn: () =>
       runHybridSearch({
@@ -126,9 +130,12 @@ function SearchExplorerPage() {
       <div className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Semantic &amp; Hybrid Search Explorer</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Semantic &amp; Hybrid Search Explorer
+            </h1>
             <p className="text-xs text-muted-foreground">
-              Query events using meaning, keywords, and strict metadata filters with transparent match scores.
+              Query events using meaning, keywords, and strict metadata filters with transparent
+              match scores.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -156,7 +163,11 @@ function SearchExplorerPage() {
               className="gap-1.5 text-xs"
               disabled={!events.length}
               onClick={() =>
-                triggerDownload("scout-search-results.csv", eventsToCsv(events), "text/csv;charset=utf-8")
+                triggerDownload(
+                  "scout-search-results.csv",
+                  eventsToCsv(events),
+                  "text/csv;charset=utf-8",
+                )
               }
             >
               <Download className="size-3.5" /> Export CSV
@@ -219,7 +230,10 @@ function SearchExplorerPage() {
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-xs font-medium text-muted-foreground">Saved searches:</span>
             {savedSearches.map((s) => (
-              <div key={s.id} className="inline-flex items-center rounded-full border bg-card px-2.5 py-0.5 text-xs">
+              <div
+                key={s.id}
+                className="inline-flex items-center rounded-full border bg-card px-2.5 py-0.5 text-xs"
+              >
                 <button
                   type="button"
                   className="hover:text-primary"
@@ -248,7 +262,8 @@ function SearchExplorerPage() {
           <Alert>
             <Info className="size-4" />
             <AlertDescription className="text-xs">
-              Vector embeddings are not active in this environment yet — showing exact PostgreSQL full-text keyword and metadata filter results without fabricating vector scores.
+              Vector embeddings are not active in this environment yet — showing exact PostgreSQL
+              full-text keyword and metadata filter results without fabricating vector scores.
             </AlertDescription>
           </Alert>
         )}
@@ -346,10 +361,7 @@ function SearchExplorerPage() {
 
                 <div className="border-t pt-3">
                   <label className="flex cursor-pointer items-center gap-2 font-medium">
-                    <Checkbox
-                      checked={freeOnly}
-                      onCheckedChange={(v) => setFreeOnly(Boolean(v))}
-                    />
+                    <Checkbox checked={freeOnly} onCheckedChange={(v) => setFreeOnly(Boolean(v))} />
                     <span>Free events only</span>
                   </label>
                 </div>
@@ -400,10 +412,18 @@ function SearchExplorerPage() {
             <Tabs defaultValue="cards">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <TabsList>
-                  <TabsTrigger value="cards" className="text-xs">Cards</TabsTrigger>
-                  <TabsTrigger value="table" className="text-xs">Interactive Table</TabsTrigger>
-                  <TabsTrigger value="timeline" className="text-xs">Timeline</TabsTrigger>
-                  <TabsTrigger value="analytics" className="text-xs">Charts</TabsTrigger>
+                  <TabsTrigger value="cards" className="text-xs">
+                    Cards
+                  </TabsTrigger>
+                  <TabsTrigger value="table" className="text-xs">
+                    Interactive Table
+                  </TabsTrigger>
+                  <TabsTrigger value="timeline" className="text-xs">
+                    Timeline
+                  </TabsTrigger>
+                  <TabsTrigger value="analytics" className="text-xs">
+                    Charts
+                  </TabsTrigger>
                 </TabsList>
                 <span className="text-xs text-muted-foreground tabular-nums">
                   {isFetching

@@ -4,12 +4,7 @@ import {
   hasAnyFilter,
   sanitizeFilters,
 } from "@/lib/events/filters";
-import {
-  buildTsQuery,
-  rankCandidates,
-  tokenize,
-  type Candidate,
-} from "@/lib/events/ranking";
+import { buildTsQuery, rankCandidates, tokenize, type Candidate } from "@/lib/events/ranking";
 import type {
   EventFormat,
   EventRecord,
@@ -214,8 +209,12 @@ export async function executeSearch(input: ExecuteSearchInput): Promise<SearchRe
     keyword_query: (keywordQuery || null) as unknown as string,
     workspace_id: workspaceId as unknown as string,
     filter_formats: (filters.formats.length ? filters.formats : null) as unknown as string[],
-    filter_categories: (filters.categories.length ? filters.categories : null) as unknown as string[],
-    filter_technologies: (filters.technologies.length ? filters.technologies : null) as unknown as string[],
+    filter_categories: (filters.categories.length
+      ? filters.categories
+      : null) as unknown as string[],
+    filter_technologies: (filters.technologies.length
+      ? filters.technologies
+      : null) as unknown as string[],
     filter_start: bounds.start as unknown as string,
     filter_end: bounds.end as unknown as string,
     filter_city: filters.city as unknown as string,
@@ -249,8 +248,7 @@ export async function executeSearch(input: ExecuteSearchInput): Promise<SearchRe
 
   // Fallback for semantic-only request when semantic embeddings are unavailable:
   // re-run keyword/browse if semantic mode returned 0 due to missing vectors
-  const effectiveMode: SearchMode =
-    mode === "semantic" && !semanticAvailable ? "keyword" : mode;
+  const effectiveMode: SearchMode = mode === "semantic" && !semanticAvailable ? "keyword" : mode;
 
   const signals = Array.from(
     new Set([...(input.signals ?? []), ...filters.technologies, ...filters.categories]),
@@ -313,7 +311,10 @@ export async function executeSearch(input: ExecuteSearchInput): Promise<SearchRe
         latency_ms: latencyMs,
         status,
       })
-      .then(() => undefined, () => undefined);
+      .then(
+        () => undefined,
+        () => undefined,
+      );
   }
 
   return {

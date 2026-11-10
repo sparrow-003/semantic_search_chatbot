@@ -40,8 +40,12 @@ export function TimelineBlock({ props }: { props: TimelineProps }) {
                   })}
                 </span>
                 <div className="flex items-center gap-1.5">
-                  <Badge variant="secondary" className="text-[11px]">{ev.category}</Badge>
-                  <Badge variant="outline" className="text-[11px]">{FORMAT_LABELS[ev.format]}</Badge>
+                  <Badge variant="secondary" className="text-[11px]">
+                    {ev.category}
+                  </Badge>
+                  <Badge variant="outline" className="text-[11px]">
+                    {FORMAT_LABELS[ev.format]}
+                  </Badge>
                 </div>
               </div>
               <button
@@ -55,7 +59,7 @@ export function TimelineBlock({ props }: { props: TimelineProps }) {
               <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
                   <MapPin className="size-3" />
-                  {ev.city ? `${ev.city}, ${ev.country}` : ev.venue ?? "Virtual"}
+                  {ev.city ? `${ev.city}, ${ev.country}` : (ev.venue ?? "Virtual")}
                 </span>
                 <span>·</span>
                 <span>{ev.technologies.slice(0, 4).join(", ")}</span>
@@ -71,7 +75,7 @@ export function TimelineBlock({ props }: { props: TimelineProps }) {
 export function KanbanBlock({ props }: { props: KanbanProps }) {
   const { setInspectedEvent } = useWorkspace();
   const columns = useMemo(() => {
-    const map = new Map<string, typeof props.events>();
+    const map = new Map<string, KanbanProps["events"]>();
     for (const ev of props.events) {
       const key =
         props.groupBy === "format"
@@ -98,7 +102,9 @@ export function KanbanBlock({ props }: { props: KanbanProps }) {
             <div key={colTitle} className="flex flex-col gap-2 rounded-lg border bg-muted/30 p-3">
               <div className="flex items-center justify-between text-xs font-semibold">
                 <span>{colTitle}</span>
-                <Badge variant="secondary" className="tabular-nums">{items.length}</Badge>
+                <Badge variant="secondary" className="tabular-nums">
+                  {items.length}
+                </Badge>
               </div>
               <div className="space-y-2">
                 {items.map((ev) => (
@@ -108,7 +114,9 @@ export function KanbanBlock({ props }: { props: KanbanProps }) {
                     onClick={() => setInspectedEvent(ev as RankedEvent)}
                     className="w-full rounded-md border bg-card p-2.5 text-left transition-colors hover:border-primary/40"
                   >
-                    <div className="text-xs font-medium leading-snug text-foreground">{ev.title}</div>
+                    <div className="text-xs font-medium leading-snug text-foreground">
+                      {ev.title}
+                    </div>
                     <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
                       <span className="tabular-nums">{ev.startAt.slice(0, 10)}</span>
                       <span>{ev.isFree ? "Free" : "Paid"}</span>
@@ -162,10 +170,17 @@ export function ChecklistBlock({ props }: { props: ChecklistProps }) {
                 className="mt-0.5"
               />
               <div className="space-y-0.5">
-                <div className={cn("text-xs font-medium", isChecked && "line-through text-muted-foreground")}>
+                <div
+                  className={cn(
+                    "text-xs font-medium",
+                    isChecked && "line-through text-muted-foreground",
+                  )}
+                >
                   {item.label}
                 </div>
-                {item.detail && <div className="text-[11px] text-muted-foreground">{item.detail}</div>}
+                {item.detail && (
+                  <div className="text-[11px] text-muted-foreground">{item.detail}</div>
+                )}
               </div>
             </label>
           );
@@ -185,7 +200,8 @@ export function ReportSummaryBlock({ props }: { props: ReportProps }) {
             {props.title}
           </CardTitle>
           <p className="text-xs text-muted-foreground">
-            Generated {new Date(props.generatedAt).toLocaleString()} · Query: &ldquo;{props.querySummary}&rdquo;
+            Generated {new Date(props.generatedAt).toLocaleString()} · Query: &ldquo;
+            {props.querySummary}&rdquo;
           </p>
         </div>
         <div className="flex items-center gap-1.5">
@@ -238,7 +254,9 @@ export function ReportSummaryBlock({ props }: { props: ReportProps }) {
       </CardHeader>
       <CardContent className="space-y-4 text-xs">
         <div className="space-y-1.5">
-          <h4 className="font-semibold uppercase tracking-wider text-muted-foreground">Key Findings</h4>
+          <h4 className="font-semibold uppercase tracking-wider text-muted-foreground">
+            Key Findings
+          </h4>
           <ul className="list-disc space-y-1 pl-5 text-foreground">
             {props.highlights.map((h, i) => (
               <li key={i}>{h}</li>

@@ -45,17 +45,42 @@ const KNOWN_TOPICS: Array<{ label: string; patterns: RegExp[] }> = [
   { label: "Next.js", patterns: [/\bnext\.?js\b/i, /\bnextjs\b/i] },
   { label: "TypeScript", patterns: [/\btypescript\b/i, /\bts\b/i] },
   { label: "JavaScript", patterns: [/\bjavascript\b/i, /\bjs\b/i, /\bnode\.?js\b/i] },
-  { label: "AI", patterns: [/\bai\b/i, /\bartificial intelligence\b/i, /\bgenerative ai\b/i, /\brag\b/i, /\bagents?\b/i] },
+  {
+    label: "AI",
+    patterns: [
+      /\bai\b/i,
+      /\bartificial intelligence\b/i,
+      /\bgenerative ai\b/i,
+      /\brag\b/i,
+      /\bagents?\b/i,
+    ],
+  },
   { label: "LLM", patterns: [/\bllms?\b/i, /\blarge language models?\b/i] },
   { label: "Machine Learning", patterns: [/\bmachine learning\b/i, /\bmlops\b/i, /\bml\b/i] },
   { label: "Python", patterns: [/\bpython\b/i, /\bpydata\b/i, /\basyncio\b/i] },
   { label: "Kubernetes", patterns: [/\bkubernetes\b/i, /\bk8s\b/i, /\bkubecon\b/i] },
-  { label: "Cloud", patterns: [/\bcloud\b/i, /\baws\b/i, /\bserverless\b/i, /\bedge computing\b/i] },
+  {
+    label: "Cloud",
+    patterns: [/\bcloud\b/i, /\baws\b/i, /\bserverless\b/i, /\bedge computing\b/i],
+  },
   { label: "DevOps", patterns: [/\bdevops\b/i, /\bobservability\b/i, /\bsre\b/i] },
   { label: "Security", patterns: [/\bsecurity\b/i, /\bsecurecode\b/i] },
-  { label: "Data Engineering", patterns: [/\bdata engineering\b/i, /\bdata mesh\b/i, /\bsql\b/i, /\bpostgresql\b/i, /\bpgvector\b/i, /\bvector\b/i] },
+  {
+    label: "Data Engineering",
+    patterns: [
+      /\bdata engineering\b/i,
+      /\bdata mesh\b/i,
+      /\bsql\b/i,
+      /\bpostgresql\b/i,
+      /\bpgvector\b/i,
+      /\bvector\b/i,
+    ],
+  },
   { label: "Data Visualization", patterns: [/\bdata visualization\b/i, /\bd3\b/i] },
-  { label: "Design Systems", patterns: [/\bdesign systems?\b/i, /\bfigma\b/i, /\bcss\b/i, /\baccessibility\b/i, /\bwcag\b/i] },
+  {
+    label: "Design Systems",
+    patterns: [/\bdesign systems?\b/i, /\bfigma\b/i, /\bcss\b/i, /\baccessibility\b/i, /\bwcag\b/i],
+  },
   { label: "Rust", patterns: [/\brust\b/i, /\bwebassembly\b/i, /\bwasm\b/i] },
   { label: "Go", patterns: [/\bgolang\b/i, /\bgo\s+systems\b/i] },
   { label: "Vue", patterns: [/\bvue\b/i, /\bnuxt\b/i] },
@@ -75,14 +100,7 @@ const KNOWN_CITIES = [
   "Toronto",
 ];
 
-const KNOWN_CATEGORIES = [
-  "Conference",
-  "Workshop",
-  "Meetup",
-  "Webinar",
-  "Hackathon",
-  "Bootcamp",
-];
+const KNOWN_CATEGORIES = ["Conference", "Workshop", "Meetup", "Webinar", "Hackathon", "Bootcamp"];
 
 const MONTH_NAMES: Record<string, number> = {
   january: 0,
@@ -120,7 +138,10 @@ function monthBounds(year: number, monthZeroIdx: number): { dateStart: string; d
   };
 }
 
-function extractDateRange(query: string, now: Date): { dateStart: string | null; dateEnd: string | null } {
+function extractDateRange(
+  query: string,
+  now: Date,
+): { dateStart: string | null; dateEnd: string | null } {
   const explicit = query.match(/\b(\d{4}-\d{2}-\d{2})\b/g);
   if (explicit && explicit.length >= 2) {
     return { dateStart: explicit[0] ?? null, dateEnd: explicit[1] ?? null };
@@ -249,7 +270,8 @@ function detectChartDimension(lower: string): ChartDimension {
 function detectDiagramType(lower: string): DiagramType {
   if (/\bsequence\b/.test(lower)) return "sequence";
   if (/\barchitecture\b|\bsystem\b|\binfrastructure\b/.test(lower)) return "architecture";
-  if (/\ber\s+diagram\b|\bentity\s+relationship\b|\bdatabase\s+schema\b|\bschema\b/.test(lower)) return "er_diagram";
+  if (/\ber\s+diagram\b|\bentity\s+relationship\b|\bdatabase\s+schema\b|\bschema\b/.test(lower))
+    return "er_diagram";
   if (/\bmind\s*map\b/.test(lower)) return "mind_map";
   if (/\bdecision\s+tree\b/.test(lower)) return "decision_tree";
   if (/\buser\s+journey\b|\bjourney\b/.test(lower)) return "user_journey";
@@ -294,7 +316,9 @@ export function parseUserIntent(
   }
 
   // Extract topics / technologies
-  const topics = KNOWN_TOPICS.filter((t) => t.patterns.some((p) => p.test(query))).map((t) => t.label);
+  const topics = KNOWN_TOPICS.filter((t) => t.patterns.some((p) => p.test(query))).map(
+    (t) => t.label,
+  );
 
   // Extract audience
   const audience: string[] = [];
@@ -346,14 +370,20 @@ export function parseUserIntent(
     )
   ) {
     intent = "generate_diagram";
-  } else if (/\b(create|build|generate|make|show)\b.{0,24}\b(form|filter form|feedback form|search form)\b/i.test(lower)) {
+  } else if (
+    /\b(create|build|generate|make|show)\b.{0,24}\b(form|filter form|feedback form|search form)\b/i.test(
+      lower,
+    )
+  ) {
     intent = "generate_form";
   } else if (/\bdashboard\b|\banalytics overview\b|\bvisual overview\b/i.test(lower)) {
     intent = "build_dashboard";
   } else if (tableCommand && !/\bsearch\b|\bfind\b|\blook for\b/i.test(lower)) {
     intent = "refine_table";
   } else if (
-    /\b(chart|graph|plot|histogram|distribution|visuali[sz]e|pie|donut|bar|line|scatter)\b/i.test(lower) &&
+    /\b(chart|graph|plot|histogram|distribution|visuali[sz]e|pie|donut|bar|line|scatter)\b/i.test(
+      lower,
+    ) &&
     !/\bcompare\b.{0,25}\btable\b/i.test(lower)
   ) {
     intent = "analytics_chart";
@@ -408,7 +438,12 @@ export function parseUserIntent(
   let searchText = query;
   if (explicitFollowUpRef && prevContext?.searchText && !topics.length && !hasNewConstraints) {
     searchText = prevContext.searchText;
-  } else if (explicitFollowUpRef && prevContext?.searchText && formats.length > 0 && !topics.length) {
+  } else if (
+    explicitFollowUpRef &&
+    prevContext?.searchText &&
+    formats.length > 0 &&
+    !topics.length
+  ) {
     searchText = prevContext.searchText;
   }
 

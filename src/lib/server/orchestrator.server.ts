@@ -6,10 +6,7 @@ import {
   verifyGroundedEventReferences,
   wrapUntrustedRecords,
 } from "@/lib/ai/security";
-import {
-  buildDeterministicGroundedSummary,
-  composeUIResponse,
-} from "@/lib/ai/ui-composer";
+import { buildDeterministicGroundedSummary, composeUIResponse } from "@/lib/ai/ui-composer";
 import { sanitizeFilters } from "@/lib/events/filters";
 import type {
   ConversationContext,
@@ -26,11 +23,7 @@ import {
   resolveAllowedChatModel,
 } from "./providers.server";
 import { recordTelemetry } from "./rate-limit.server";
-import {
-  executeSearch,
-  fetchEventFacets,
-  fetchEventsByIds,
-} from "./search.server";
+import { executeSearch, fetchEventFacets, fetchEventsByIds } from "./search.server";
 import { HttpError, isValidUuid, type AuthContext } from "./supabase.server";
 
 export interface ChatRequestInput {
@@ -64,11 +57,22 @@ export interface ChatResponsePayload {
 
 const llmIntentSchema = z.object({
   topics: z.array(z.string().max(40)).max(8).optional(),
-  formats: z.array(z.enum(["online", "in_person", "hybrid"])).max(3).optional(),
+  formats: z
+    .array(z.enum(["online", "in_person", "hybrid"]))
+    .max(3)
+    .optional(),
   categories: z.array(z.string().max(40)).max(6).optional(),
   city: z.string().max(60).nullable().optional(),
-  dateStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
-  dateEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  dateStart: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable()
+    .optional(),
+  dateEnd: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable()
+    .optional(),
   searchKeywords: z.string().max(200).optional(),
 });
 
@@ -77,7 +81,11 @@ async function refineIntentWithLLM(
   base: ParsedIntent,
   modelId?: string | null,
 ): Promise<{ parsed: ParsedIntent; model: string }> {
-  if (!isGatewayConfigured() || base.intent === "generate_diagram" || base.intent === "generate_form") {
+  if (
+    !isGatewayConfigured() ||
+    base.intent === "generate_diagram" ||
+    base.intent === "generate_form"
+  ) {
     return { parsed: base, model: "deterministic" };
   }
   const today = new Date().toISOString().slice(0, 10);
@@ -98,7 +106,7 @@ async function refineIntentWithLLM(
     const mergedFilters = sanitizeFilters({
       formats: llm.formats?.length ? llm.formats : base.filters.formats,
       categories: llm.categories?.length ? llm.categories : base.filters.categories,
-      technologies: base.topics.length ? base.topics : llm.topics ?? base.filters.technologies,
+      technologies: base.topics.length ? base.topics : (llm.topics ?? base.filters.technologies),
       dateStart: base.filters.dateStart ?? llm.dateStart ?? null,
       dateEnd: base.filters.dateEnd ?? llm.dateEnd ?? null,
       city: base.filters.city ?? llm.city ?? null,
@@ -106,7 +114,7 @@ async function refineIntentWithLLM(
     return {
       parsed: {
         ...base,
-        topics: base.topics.length ? base.topics : llm.topics ?? [],
+        topics: base.topics.length ? base.topics : (llm.topics ?? []),
         filters: mergedFilters,
         searchText: llm.searchKeywords?.trim() || base.searchText,
       },
@@ -172,10 +180,7 @@ async function synthesizeGroundedAnswer(
   }
 }
 
-function buildFollowUpSuggestions(
-  parsed: ParsedIntent,
-  events: RankedEvent[],
-): string[] {
+function buildFollowUpSuggestions(parsed: ParsedIntent, events: RankedEvent[]): string[] {
   if (parsed.intent === "generate_diagram") {
     return [
       "Show the database ER diagram",
@@ -367,7 +372,7 @@ export async function runChatOrchestration(
       events.length > 0
         ? events.map((e) => e.id)
         : parsed.intent === "generate_diagram" || parsed.intent === "generate_form"
-          ? prevContext?.resultIds ?? []
+          ? (prevContext?.resultIds ?? [])
           : [],
     intent: parsed.intent,
     at: new Date().toISOString(),

@@ -1,7 +1,12 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import type { ConversationContext, RankedEvent, SearchFilters, SearchMode } from "@/lib/events/types";
+import type {
+  ConversationContext,
+  RankedEvent,
+  SearchFilters,
+  SearchMode,
+} from "@/lib/events/types";
 import type { DashboardConfig, UIResponse } from "@/lib/ui/schema";
 import { apiFetch, type ChatTurnResult, type WorkspaceItem } from "./api";
 

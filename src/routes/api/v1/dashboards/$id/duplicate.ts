@@ -5,12 +5,12 @@ export const Route = createFileRoute("/api/v1/dashboards/$id/duplicate")({
     handlers: {
       POST: async ({ request, params }) => {
         const { errorResponse, jsonResponse } = await import("@/lib/server/rate-limit.server");
-        const { resolveAuthContext, isValidUuid, HttpError } = await import(
-          "@/lib/server/supabase.server"
-        );
+        const { resolveAuthContext, isValidUuid, HttpError } =
+          await import("@/lib/server/supabase.server");
         try {
           const auth = await resolveAuthContext(request, { required: true });
-          if (!isValidUuid(params.id)) throw new HttpError(400, "invalid_id", "Invalid dashboard ID.");
+          if (!isValidUuid(params.id))
+            throw new HttpError(400, "invalid_id", "Invalid dashboard ID.");
 
           const { data: src, error: fetchErr } = await auth!.client
             .from("saved_dashboards")
@@ -29,7 +29,9 @@ export const Route = createFileRoute("/api/v1/dashboards/$id/duplicate")({
               visibility: "private",
               configuration: src.configuration,
             })
-            .select("id, tenant_id, owner_id, name, visibility, configuration, created_at, updated_at")
+            .select(
+              "id, tenant_id, owner_id, name, visibility, configuration, created_at, updated_at",
+            )
             .single();
           if (insErr) throw new Error(insErr.message);
           return jsonResponse({ dashboard: copy }, 201);

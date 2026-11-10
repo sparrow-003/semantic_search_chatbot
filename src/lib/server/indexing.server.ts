@@ -1,10 +1,6 @@
 import { embeddingDocument } from "@/lib/events/ranking";
 import type { EventFormat, EventRecord } from "@/lib/events/types";
-import {
-  EMBEDDING_MODEL,
-  isGatewayConfigured,
-  lovableEmbeddingProvider,
-} from "./providers.server";
+import { EMBEDDING_MODEL, isGatewayConfigured, lovableEmbeddingProvider } from "./providers.server";
 import {
   assertWorkspaceAccess,
   createAnonSupabaseClient,
@@ -42,7 +38,11 @@ export async function getEmbeddingStatus(
   if (workspaceId && auth) {
     await assertWorkspaceAccess(auth.client, auth.userId, workspaceId);
   } else if (workspaceId && !auth) {
-    throw new HttpError(401, "unauthorized", "Authentication required to inspect workspace index status.");
+    throw new HttpError(
+      401,
+      "unauthorized",
+      "Authentication required to inspect workspace index status.",
+    );
   }
 
   const client = admin ?? auth?.client ?? createAnonSupabaseClient();
@@ -155,7 +155,11 @@ export async function indexEventsBatch(opts: IndexBatchOptions): Promise<IndexBa
 
   const { data: events, error: fetchErr } = await evQuery;
   if (fetchErr) {
-    throw new HttpError(500, "db_error", `Failed to fetch events for indexing: ${fetchErr.message}`);
+    throw new HttpError(
+      500,
+      "db_error",
+      `Failed to fetch events for indexing: ${fetchErr.message}`,
+    );
   }
   if (!events?.length) {
     return {
@@ -173,9 +177,7 @@ export async function indexEventsBatch(opts: IndexBatchOptions): Promise<IndexBa
     .from("event_embeddings")
     .select("event_id, content_hash, embedding_model")
     .in("event_id", ids);
-  const existingMap = new Map(
-    (existingEmbeddings ?? []).map((row) => [row.event_id, row]),
-  );
+  const existingMap = new Map((existingEmbeddings ?? []).map((row) => [row.event_id, row]));
 
   const toEmbed: Array<{ event: EventRecord; doc: string; hash: string }> = [];
   let skippedUnchanged = 0;

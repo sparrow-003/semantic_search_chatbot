@@ -10,6 +10,14 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as WorkspaceRouteImport } from './routes/workspace'
+import { Route as AuthResetRouteImport } from './routes/auth.reset'
+import { Route as DashboardsIndexRouteImport } from './routes/dashboards/index'
+import { Route as DashboardsIdRouteImport } from './routes/dashboards/$id'
 import { Route as ApiV1HealthRouteImport } from './routes/api/v1/health'
 import { Route as ApiV1AnalyticsAggregateRouteImport } from './routes/api/v1/analytics/aggregate'
 import { Route as ApiV1AnalyticsMetricsRouteImport } from './routes/api/v1/analytics/metrics'
@@ -42,6 +50,46 @@ import { Route as ApiV1ChatSessionsIdMessagesRouteImport } from './routes/api/v1
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkspaceRoute = WorkspaceRouteImport.update({
+  id: '/workspace',
+  path: '/workspace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthResetRoute = AuthResetRouteImport.update({
+  id: '/reset',
+  path: '/reset',
+  getParentRoute: () => AuthRoute,
+} as any)
+const DashboardsIndexRoute = DashboardsIndexRouteImport.update({
+  id: '/dashboards/',
+  path: '/dashboards/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardsIdRoute = DashboardsIdRouteImport.update({
+  id: '/dashboards/$id',
+  path: '/dashboards/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiV1HealthRoute = ApiV1HealthRouteImport.update({
@@ -191,6 +239,14 @@ const ApiV1ChatSessionsIdMessagesRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/auth': typeof AuthRouteWithChildren
+  '/profile': typeof ProfileRoute
+  '/search': typeof SearchRoute
+  '/workspace': typeof WorkspaceRoute
+  '/auth/reset': typeof AuthResetRoute
+  '/dashboards/$id': typeof DashboardsIdRoute
+  '/dashboards/': typeof DashboardsIndexRoute
   '/api/v1/health': typeof ApiV1HealthRoute
   '/api/v1/analytics/aggregate': typeof ApiV1AnalyticsAggregateRoute
   '/api/v1/analytics/metrics': typeof ApiV1AnalyticsMetricsRoute
@@ -222,6 +278,14 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/auth': typeof AuthRouteWithChildren
+  '/profile': typeof ProfileRoute
+  '/search': typeof SearchRoute
+  '/workspace': typeof WorkspaceRoute
+  '/auth/reset': typeof AuthResetRoute
+  '/dashboards/$id': typeof DashboardsIdRoute
+  '/dashboards': typeof DashboardsIndexRoute
   '/api/v1/health': typeof ApiV1HealthRoute
   '/api/v1/analytics/aggregate': typeof ApiV1AnalyticsAggregateRoute
   '/api/v1/analytics/metrics': typeof ApiV1AnalyticsMetricsRoute
@@ -254,6 +318,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/auth': typeof AuthRouteWithChildren
+  '/profile': typeof ProfileRoute
+  '/search': typeof SearchRoute
+  '/workspace': typeof WorkspaceRoute
+  '/auth/reset': typeof AuthResetRoute
+  '/dashboards/$id': typeof DashboardsIdRoute
+  '/dashboards/': typeof DashboardsIndexRoute
   '/api/v1/health': typeof ApiV1HealthRoute
   '/api/v1/analytics/aggregate': typeof ApiV1AnalyticsAggregateRoute
   '/api/v1/analytics/metrics': typeof ApiV1AnalyticsMetricsRoute
@@ -287,6 +359,14 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
+    | '/auth'
+    | '/profile'
+    | '/search'
+    | '/workspace'
+    | '/auth/reset'
+    | '/dashboards/$id'
+    | '/dashboards/'
     | '/api/v1/health'
     | '/api/v1/analytics/aggregate'
     | '/api/v1/analytics/metrics'
@@ -318,6 +398,14 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
+    | '/auth'
+    | '/profile'
+    | '/search'
+    | '/workspace'
+    | '/auth/reset'
+    | '/dashboards/$id'
+    | '/dashboards'
     | '/api/v1/health'
     | '/api/v1/analytics/aggregate'
     | '/api/v1/analytics/metrics'
@@ -349,6 +437,14 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
+    | '/auth'
+    | '/profile'
+    | '/search'
+    | '/workspace'
+    | '/auth/reset'
+    | '/dashboards/$id'
+    | '/dashboards/'
     | '/api/v1/health'
     | '/api/v1/analytics/aggregate'
     | '/api/v1/analytics/metrics'
@@ -381,6 +477,13 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  AuthRoute: typeof AuthRouteWithChildren
+  ProfileRoute: typeof ProfileRoute
+  SearchRoute: typeof SearchRoute
+  WorkspaceRoute: typeof WorkspaceRoute
+  DashboardsIdRoute: typeof DashboardsIdRoute
+  DashboardsIndexRoute: typeof DashboardsIndexRoute
   ApiV1HealthRoute: typeof ApiV1HealthRoute
   ApiV1AnalyticsAggregateRoute: typeof ApiV1AnalyticsAggregateRoute
   ApiV1AnalyticsMetricsRoute: typeof ApiV1AnalyticsMetricsRoute
@@ -418,6 +521,62 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/workspace': {
+      id: '/workspace'
+      path: '/workspace'
+      fullPath: '/workspace'
+      preLoaderRoute: typeof WorkspaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/reset': {
+      id: '/auth/reset'
+      path: '/reset'
+      fullPath: '/auth/reset'
+      preLoaderRoute: typeof AuthResetRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/dashboards/': {
+      id: '/dashboards/'
+      path: '/dashboards'
+      fullPath: '/dashboards/'
+      preLoaderRoute: typeof DashboardsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboards/$id': {
+      id: '/dashboards/$id'
+      path: '/dashboards/$id'
+      fullPath: '/dashboards/$id'
+      preLoaderRoute: typeof DashboardsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/v1/health': {
@@ -619,8 +778,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthRouteChildren {
+  AuthResetRoute: typeof AuthResetRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthResetRoute: AuthResetRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  AuthRoute: AuthRouteWithChildren,
+  ProfileRoute: ProfileRoute,
+  SearchRoute: SearchRoute,
+  WorkspaceRoute: WorkspaceRoute,
+  DashboardsIdRoute: DashboardsIdRoute,
+  DashboardsIndexRoute: DashboardsIndexRoute,
   ApiV1HealthRoute: ApiV1HealthRoute,
   ApiV1AnalyticsAggregateRoute: ApiV1AnalyticsAggregateRoute,
   ApiV1AnalyticsMetricsRoute: ApiV1AnalyticsMetricsRoute,

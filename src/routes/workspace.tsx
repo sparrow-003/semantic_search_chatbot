@@ -172,9 +172,12 @@ function WorkspaceManagementPage() {
       <div className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Team Workspaces &amp; Event Studio</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Team Workspaces &amp; Event Studio
+            </h1>
             <p className="text-xs text-muted-foreground">
-              Multi-tenant isolated workspaces with role-based permissions, private events, and audit logs.
+              Multi-tenant isolated workspaces with role-based permissions, private events, and
+              audit logs.
             </p>
           </div>
         </div>
@@ -182,7 +185,10 @@ function WorkspaceManagementPage() {
         {!user ? (
           <Alert>
             <AlertDescription className="flex flex-wrap items-center justify-between gap-2 text-xs">
-              <span>Sign in to create team workspaces, manage role permissions, and publish private tenant events.</span>
+              <span>
+                Sign in to create team workspaces, manage role permissions, and publish private
+                tenant events.
+              </span>
               <Button asChild size="sm">
                 <Link to="/auth">Sign in</Link>
               </Button>
@@ -250,19 +256,23 @@ function WorkspaceManagementPage() {
             {selectedWs && (
               <Tabs defaultValue="members">
                 <TabsList>
-                  <TabsTrigger value="members" className="text-xs">Members &amp; Roles</TabsTrigger>
-                  <TabsTrigger value="events" className="text-xs">Workspace Events</TabsTrigger>
+                  <TabsTrigger value="members" className="text-xs">
+                    Members &amp; Roles
+                  </TabsTrigger>
+                  <TabsTrigger value="events" className="text-xs">
+                    Workspace Events
+                  </TabsTrigger>
                   {isAdminOrOwner && (
-                    <TabsTrigger value="audit" className="text-xs">Audit Logs</TabsTrigger>
+                    <TabsTrigger value="audit" className="text-xs">
+                      Audit Logs
+                    </TabsTrigger>
                   )}
                 </TabsList>
 
                 <TabsContent value="members" className="mt-4 space-y-4">
                   <Card>
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-base">
-                        Members — {selectedWs.name}
-                      </CardTitle>
+                      <CardTitle className="text-base">Members — {selectedWs.name}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {isAdminOrOwner && (
@@ -311,13 +321,10 @@ function WorkspaceManagementPage() {
                                 <Select
                                   value={m.role}
                                   onValueChange={async (role) => {
-                                    await apiFetch(
-                                      `/api/v1/workspaces/${selectedWs.id}/members`,
-                                      {
-                                        method: "PATCH",
-                                        body: JSON.stringify({ userId: m.user_id, role }),
-                                      },
-                                    );
+                                    await apiFetch(`/api/v1/workspaces/${selectedWs.id}/members`, {
+                                      method: "PATCH",
+                                      body: JSON.stringify({ userId: m.user_id, role }),
+                                    });
                                     await queryClient.invalidateQueries({
                                       queryKey: ["ws-members", selectedWs.id],
                                     });
@@ -345,13 +352,10 @@ function WorkspaceManagementPage() {
                                   variant="ghost"
                                   className="size-7 text-destructive"
                                   onClick={async () => {
-                                    await apiFetch(
-                                      `/api/v1/workspaces/${selectedWs.id}/members`,
-                                      {
-                                        method: "DELETE",
-                                        body: JSON.stringify({ userId: m.user_id }),
-                                      },
-                                    );
+                                    await apiFetch(`/api/v1/workspaces/${selectedWs.id}/members`, {
+                                      method: "DELETE",
+                                      body: JSON.stringify({ userId: m.user_id }),
+                                    });
                                     await queryClient.invalidateQueries({
                                       queryKey: ["ws-members", selectedWs.id],
                                     });
@@ -374,23 +378,39 @@ function WorkspaceManagementPage() {
                     <Card>
                       <CardHeader className="pb-3">
                         <CardTitle className="flex items-center gap-2 text-base">
-                          <CalendarPlus className="size-4 text-primary" /> Add Private Workspace Event
+                          <CalendarPlus className="size-4 text-primary" /> Add Private Workspace
+                          Event
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <form onSubmit={handleCreateEvent} className="grid gap-3 sm:grid-cols-2">
                           <div className="space-y-1">
                             <Label className="text-xs">Title *</Label>
-                            <Input required value={title} onChange={(e) => setTitle(e.target.value)} className="h-8 text-xs" />
+                            <Input
+                              required
+                              value={title}
+                              onChange={(e) => setTitle(e.target.value)}
+                              className="h-8 text-xs"
+                            />
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Category *</Label>
-                            <Input required value={category} onChange={(e) => setCategory(e.target.value)} className="h-8 text-xs" />
+                            <Input
+                              required
+                              value={category}
+                              onChange={(e) => setCategory(e.target.value)}
+                              className="h-8 text-xs"
+                            />
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Format</Label>
-                            <Select value={format} onValueChange={(v) => setFormat(v as EventFormat)}>
-                              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                            <Select
+                              value={format}
+                              onValueChange={(v) => setFormat(v as EventFormat)}
+                            >
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="online">Online</SelectItem>
                                 <SelectItem value="in_person">In person</SelectItem>
@@ -400,30 +420,58 @@ function WorkspaceManagementPage() {
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Start Date &amp; Time</Label>
-                            <Input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} className="h-8 text-xs" />
+                            <Input
+                              type="datetime-local"
+                              value={startAt}
+                              onChange={(e) => setStartAt(e.target.value)}
+                              className="h-8 text-xs"
+                            />
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Technologies (comma separated)</Label>
-                            <Input value={techs} onChange={(e) => setTechs(e.target.value)} className="h-8 text-xs" />
+                            <Input
+                              value={techs}
+                              onChange={(e) => setTechs(e.target.value)}
+                              className="h-8 text-xs"
+                            />
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">City (optional)</Label>
-                            <Input value={city} onChange={(e) => setCity(e.target.value)} className="h-8 text-xs" />
+                            <Input
+                              value={city}
+                              onChange={(e) => setCity(e.target.value)}
+                              className="h-8 text-xs"
+                            />
                           </div>
                           <div className="space-y-1 sm:col-span-2">
                             <Label className="text-xs">Summary</Label>
-                            <Input value={summary} onChange={(e) => setSummary(e.target.value)} className="h-8 text-xs" />
+                            <Input
+                              value={summary}
+                              onChange={(e) => setSummary(e.target.value)}
+                              className="h-8 text-xs"
+                            />
                           </div>
                           <div className="space-y-1 sm:col-span-2">
                             <Label className="text-xs">Description</Label>
-                            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="text-xs" rows={2} />
+                            <Textarea
+                              value={description}
+                              onChange={(e) => setDescription(e.target.value)}
+                              className="text-xs"
+                              rows={2}
+                            />
                           </div>
                           <div className="flex items-center justify-between sm:col-span-2">
                             <label className="flex items-center gap-2 text-xs">
-                              <input type="checkbox" checked={isFree} onChange={(e) => setIsFree(e.target.checked)} />
+                              <input
+                                type="checkbox"
+                                checked={isFree}
+                                onChange={(e) => setIsFree(e.target.checked)}
+                              />
                               Free admission
                             </label>
-                            <Button type="submit" size="sm">Publish Event</Button>
+                            <Button type="submit" size="sm">
+                              Publish Event
+                            </Button>
                           </div>
                         </form>
                       </CardContent>
@@ -435,11 +483,16 @@ function WorkspaceManagementPage() {
                       <CardTitle className="text-base">Workspace Private Events</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-xs">
-                      {!(wsEventsData?.events.length) ? (
-                        <p className="text-muted-foreground">No private events in this workspace yet.</p>
+                      {!wsEventsData?.events.length ? (
+                        <p className="text-muted-foreground">
+                          No private events in this workspace yet.
+                        </p>
                       ) : (
                         wsEventsData.events.map((ev) => (
-                          <div key={ev.id} className="flex items-center justify-between rounded-lg border p-3">
+                          <div
+                            key={ev.id}
+                            className="flex items-center justify-between rounded-lg border p-3"
+                          >
                             <div>
                               <div className="font-semibold">{ev.title}</div>
                               <div className="text-muted-foreground">
@@ -454,7 +507,9 @@ function WorkspaceManagementPage() {
                                 className="size-7 text-destructive"
                                 onClick={async () => {
                                   await apiFetch(`/api/v1/events/${ev.id}`, { method: "DELETE" });
-                                  await queryClient.invalidateQueries({ queryKey: ["ws-events", selectedWs.id] });
+                                  await queryClient.invalidateQueries({
+                                    queryKey: ["ws-events", selectedWs.id],
+                                  });
                                   toast.success("Event deleted");
                                 }}
                               >
@@ -477,13 +532,18 @@ function WorkspaceManagementPage() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-2 text-xs">
-                        {!(auditData?.logs.length) ? (
+                        {!auditData?.logs.length ? (
                           <p className="text-muted-foreground">No audit entries yet.</p>
                         ) : (
                           auditData.logs.map((log) => (
-                            <div key={log.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-2">
+                            <div
+                              key={log.id}
+                              className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-2"
+                            >
                               <div>
-                                <Badge variant="outline" className="mr-2 text-[10px]">{log.action}</Badge>
+                                <Badge variant="outline" className="mr-2 text-[10px]">
+                                  {log.action}
+                                </Badge>
                                 <span className="font-medium">{log.resource_type}</span>
                                 <span className="ml-2 text-muted-foreground">
                                   {JSON.stringify(log.metadata)}

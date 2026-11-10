@@ -125,7 +125,9 @@ export function DynamicFormBlock({
         <div className="flex items-center justify-between gap-2">
           <div>
             <CardTitle className="text-base">{props.title}</CardTitle>
-            {props.description && <CardDescription className="text-xs">{props.description}</CardDescription>}
+            {props.description && (
+              <CardDescription className="text-xs">{props.description}</CardDescription>
+            )}
           </div>
           <Badge variant="outline" className="text-[11px]">
             Action: {props.action}
@@ -184,7 +186,10 @@ export function DynamicFormBlock({
                       </SelectTrigger>
                       <SelectContent>
                         {(field.options ?? []).map((opt) => (
-                          <SelectItem key={opt.value || "__empty__"} value={opt.value || "__empty__"}>
+                          <SelectItem
+                            key={opt.value || "__empty__"}
+                            value={opt.value || "__empty__"}
+                          >
                             {opt.label}
                           </SelectItem>
                         ))}
@@ -286,7 +291,12 @@ export function DynamicFormBlock({
 
             <div className="flex items-center gap-2">
               {props.multiStep && step > 1 && (
-                <Button type="button" variant="outline" size="sm" onClick={() => setStep((s) => s - 1)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setStep((s) => s - 1)}
+                >
                   Previous
                 </Button>
               )}

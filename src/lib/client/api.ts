@@ -1,5 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { ConversationContext, Facets, RankedEvent, SearchFilters, SearchMode, SearchResponse } from "@/lib/events/types";
+import type {
+  ConversationContext,
+  Facets,
+  RankedEvent,
+  SearchFilters,
+  SearchMode,
+  SearchResponse,
+} from "@/lib/events/types";
 import type { DashboardConfig, DataTableConfig, UIResponse } from "@/lib/ui/schema";
 
 async function getAuthHeaders(): Promise<Record<string, string>> {

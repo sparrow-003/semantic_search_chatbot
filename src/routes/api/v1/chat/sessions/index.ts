@@ -47,9 +47,8 @@ export const Route = createFileRoute("/api/v1/chat/sessions/")({
           RATE_LIMITS,
           readBoundedJson,
         } = await import("@/lib/server/rate-limit.server");
-        const { resolveAuthContext, assertWorkspaceAccess, HttpError } = await import(
-          "@/lib/server/supabase.server"
-        );
+        const { resolveAuthContext, assertWorkspaceAccess, HttpError } =
+          await import("@/lib/server/supabase.server");
         try {
           const auth = await resolveAuthContext(request, { required: true });
           checkRateLimit(getClientKey(request, auth!.userId), RATE_LIMITS.default);

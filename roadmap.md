@@ -1,17 +1,18 @@
 # Roadmap — Scout semantic event workspace
 
-## Done / in progress
+## Done
 - [x] Database: teams (workspaces + roles), profiles, events + vector index, chats, dashboards, analytics, feedback, audit log
 - [x] Sample dataset (48 tech events)
-- [ ] Sign-in: email/password, Google, Lovable, password reset, profile (name + avatar)
-- [ ] Search screen: typed query + filters against the event database (hybrid / semantic / keyword)
-- [ ] Chat workspace: streaming chat, session history (saved when signed in), grounded answers
-- [ ] Dynamic UI: event cards, tables, charts, timeline, flowcharts, filter forms, dashboards
-- [ ] Saved dashboards (save, list, refresh, share with workspace)
-- [ ] Workspace settings: create workspace, invite members, roles
-- [ ] Tests for ranking, filters, UI spec validation
-- [ ] README
+- [x] Sign-in: email/password, Google, Lovable, password reset, profile (name + avatar)
+- [x] Search screen: typed query + filters against the event database (hybrid / semantic / keyword)
+- [x] Chat workspace: streaming chat, session history (saved when signed in, local continuity for guests), grounded answers
+- [x] Dynamic UI: event cards, interactive tables, comparison matrices, 9 chart types, timeline, kanban, checklists, reports, React Flow + Mermaid diagrams, dynamic filter forms, composite dashboards
+- [x] Saved dashboards (save, list, refresh, duplicate, export, share with workspace) & reusable templates
+- [x] Workspace settings: create workspace, invite members, manage roles, workspace audit logs
+- [x] Event management screens for workspace editors (add/delete workspace events with automatic indexing)
+- [x] Observability & embedding index admin dashboard (`/admin`)
+- [x] Tests for ranking, filters, intent parsing, UI spec validation, security, orchestration, and routing
+- [x] Complete README & `.env.example`
 
 ## Later
-- Event management screens for editors (add/edit workspace events)
-- Platform admin analytics page
+- External data connectors (CSV/XLSX upload pipelines, scheduled reports, saved search alerts)
