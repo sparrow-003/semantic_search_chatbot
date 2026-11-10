@@ -241,7 +241,7 @@ function ChatWorkspacePage() {
         setMessages(updatedMsgs);
         setActiveContext(result.context);
 
-        const tableComp = result.uiSpec.components.find((c) => c.type === "data_table");
+        const tableComp = result.uiSpec?.components.find((c) => c.type === "data_table");
         if (tableComp && tableComp.type === "data_table") {
           setActiveTableConfig(tableComp.props.config);
         }
