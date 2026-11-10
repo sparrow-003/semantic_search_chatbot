@@ -14,8 +14,10 @@ export interface LocalChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  kind?: "search" | "conversation";
   uiSpec?: UIResponse;
   events?: RankedEvent[];
+  streaming?: boolean;
   context?: ConversationContext;
   semanticAvailable?: boolean;
   lowConfidence?: boolean;
@@ -366,7 +368,8 @@ export function turnResultToAssistantMessage(res: ChatTurnResult): LocalChatMess
     id: res.messageId,
     role: "assistant",
     content: res.answer,
-    uiSpec: res.uiSpec,
+    kind: res.kind,
+    ...(res.uiSpec ? { uiSpec: res.uiSpec } : {}),
     events: res.events,
     context: res.context,
     semanticAvailable: res.semanticAvailable,

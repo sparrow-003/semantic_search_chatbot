@@ -47,7 +47,8 @@ export interface ChatTurnResult {
   sessionId: string | null;
   messageId: string;
   answer: string;
-  uiSpec: UIResponse;
+  kind: "search" | "conversation";
+  uiSpec: UIResponse | null;
   events: RankedEvent[];
   context: ConversationContext;
   semanticAvailable: boolean;
@@ -58,6 +59,17 @@ export interface ChatTurnResult {
   latencyMs: number;
 }
 
+export type ChatTurnPartial = Pick<
+  ChatTurnResult,
+  | "kind"
+  | "uiSpec"
+  | "events"
+  | "context"
+  | "semanticAvailable"
+  | "lowConfidence"
+  | "followUpSuggestions"
+>;
+
 export async function sendChatMessageStream(
   payload: {
     message: string;
@@ -65,13 +77,19 @@ export async function sendChatMessageStream(
     workspaceId?: string | null;
     mode?: SearchMode;
     model?: string | null;
+    provider?: "lovable" | "openrouter";
+    chatMode?: "auto" | "search" | "chat";
+    history?: Array<{ role: "user" | "assistant"; content: string }>;
     explicitFilters?: Partial<SearchFilters>;
     context?: ConversationContext | null;
     prevTableConfig?: DataTableConfig | null;
   },
   callbacks: {
     onStatus?: (stage: string) => void;
+    onPartial?: (partial: ChatTurnPartial) => void;
+    onDelta?: (text: string) => void;
     signal?: AbortSignal;
+    openRouterKey?: string | null;
   } = {},
 ): Promise<ChatTurnResult> {
   const authHeaders = await getAuthHeaders();
@@ -81,6 +99,9 @@ export async function sendChatMessageStream(
       "Content-Type": "application/json",
       Accept: "text/event-stream",
       ...authHeaders,
+      ...(payload.provider === "openrouter" && callbacks.openRouterKey
+        ? { "x-openrouter-key": callbacks.openRouterKey }
+        : {}),
     },
     body: JSON.stringify({ ...payload, stream: true }),
     ...(callbacks.signal ? { signal: callbacks.signal } : {}),
@@ -122,6 +143,10 @@ export async function sendChatMessageStream(
       const parsed = JSON.parse(dataLine) as Record<string, unknown>;
       if (eventType === "status" && typeof parsed["stage"] === "string") {
         callbacks.onStatus?.(parsed["stage"]);
+      } else if (eventType === "delta" && typeof parsed["text"] === "string") {
+        callbacks.onDelta?.(parsed["text"]);
+      } else if (eventType === "partial") {
+        callbacks.onPartial?.(parsed as unknown as ChatTurnPartial);
       } else if (eventType === "result") {
         finalResult = parsed as unknown as ChatTurnResult;
       } else if (eventType === "error") {
@@ -195,4 +220,31 @@ export interface WorkspaceItem {
   created_by: string;
   role: "owner" | "admin" | "editor" | "member" | "viewer";
   created_at: string;
+}
+
+export interface OpenRouterModelItem {
+  id: string;
+  name: string;
+  description: string;
+  contextLength: number | null;
+  inputModalities: string[];
+  isRouter: boolean;
+}
+
+export interface OpenRouterKeyDetails {
+  label: string | null;
+  isFreeTier: boolean;
+  limit: number | null;
+  limitRemaining: number | null;
+  usage: number | null;
+}
+
+/** Validate the user's OpenRouter key and list the free models it can use. */
+export async function fetchOpenRouterModels(
+  apiKey: string,
+): Promise<{ key: OpenRouterKeyDetails; models: OpenRouterModelItem[] }> {
+  return apiFetch("/api/v1/openrouter/models", {
+    method: "POST",
+    headers: { "x-openrouter-key": apiKey.trim() },
+  });
 }
