@@ -228,7 +228,7 @@ async function synthesizeGroundedAnswer(
   provider: ProviderChoice,
   history: HistoryTurn[],
   onDelta?: (t: string) => void,
-): Promise<{ answer: string; modelUsed: string; replaced: boolean }> {
+): Promise<{ answer: string; modelUsed: string; replaced: boolean; notice?: string }> {
   const deterministic = buildDeterministicGroundedSummary(
     query,
     parsed,
@@ -282,9 +282,13 @@ async function synthesizeGroundedAnswer(
     }
     return { answer: deterministic, modelUsed: "deterministic-fallback", replaced: true };
   } catch (err) {
-    if (err instanceof HttpError && provider.kind === "openrouter") throw err;
     if (!streamedAny) onDelta?.(deterministic);
-    return { answer: deterministic, modelUsed: "deterministic-fallback", replaced: streamedAny };
+    return {
+      answer: deterministic,
+      modelUsed: "deterministic-fallback",
+      replaced: streamedAny,
+      ...(err instanceof HttpError ? { notice: err.message } : {}),
+    };
   }
 }
 
@@ -339,15 +343,78 @@ async function loadSessionContextFromDb(
   };
 }
 
+async function persistTurn(
+  input: ChatRequestInput,
+  sessionId: string | null,
+  cleanMessage: string,
+  assistantMessageId: string,
+  answer: string,
+  uiSpec: UIResponse | null,
+  context: ConversationContext,
+  meta: Record<string, unknown>,
+): Promise<string | null> {
+  if (!input.auth) return sessionId;
+  let persistedSessionId = sessionId;
+  try {
+    if (!persistedSessionId) {
+      const { data: createdSession } = await input.auth.client
+        .from("chat_sessions")
+        .insert({
+          user_id: input.auth.userId,
+          tenant_id: input.workspaceId ?? null,
+          title: cleanMessage.slice(0, 80),
+        })
+        .select("id")
+        .single();
+      if (createdSession?.id) persistedSessionId = createdSession.id;
+    }
+    if (persistedSessionId) {
+      const parts: unknown[] = [{ type: "text", text: answer }];
+      if (uiSpec) parts.push({ type: "ui_response", spec: uiSpec });
+      parts.push({ type: "meta", ...meta });
+      await input.auth.client.from("chat_messages").insert([
+        {
+          session_id: persistedSessionId,
+          role: "user",
+          content: cleanMessage,
+          parts: [{ type: "text", text: cleanMessage }],
+          context: null,
+        },
+        {
+          id: assistantMessageId,
+          session_id: persistedSessionId,
+          role: "assistant",
+          content: answer,
+          parts: JSON.parse(JSON.stringify(parts)),
+          context: JSON.parse(JSON.stringify(context)),
+        },
+      ]);
+      await input.auth.client
+        .from("chat_sessions")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", persistedSessionId);
+    }
+  } catch (persistErr) {
+    console.error("[Chat persistence warning]", persistErr);
+  }
+  return persistedSessionId;
+}
+
 export async function runChatOrchestration(
   input: ChatRequestInput,
-  onProgress?: (stage: string) => void,
+  hooksOrProgress?: ChatHooks | ((stage: string) => void),
 ): Promise<ChatResponsePayload> {
+  const hooks: ChatHooks =
+    typeof hooksOrProgress === "function" ? { onProgress: hooksOrProgress } : (hooksOrProgress ?? {});
+  const onProgress = hooks.onProgress;
   const started = Date.now();
   const cleanMessage = sanitizeUserQuery(input.message);
   if (!cleanMessage) {
     throw new HttpError(400, "empty_message", "Please enter a question or search query.");
   }
+
+  const provider = resolveProvider(input);
+  const history = normalizeHistory(input.history);
 
   const injectionScan = detectPromptInjection(cleanMessage);
   if (injectionScan.flagged) {
@@ -358,6 +425,9 @@ export async function runChatOrchestration(
       errorCategory: injectionScan.reasons.join(","),
     });
   }
+  const securityNotice = injectionScan.flagged
+    ? "Query contained instruction-like text; retrieved records were treated strictly as untrusted data."
+    : undefined;
 
   onProgress?.("Understanding your question");
 
@@ -370,7 +440,91 @@ export async function runChatOrchestration(
   }
 
   const baseParsed = parseUserIntent(cleanMessage, prevContext);
-  const { parsed } = await refineIntentWithLLM(cleanMessage, baseParsed, input.model);
+  const assistantMessageId = crypto.randomUUID();
+
+  // ── General conversation: answered by the model with chat history ──────────
+  if (isGeneralConversation(cleanMessage, baseParsed, input.chatMode ?? "auto")) {
+    const context: ConversationContext = prevContext ?? {
+      query: cleanMessage,
+      searchText: "",
+      filters: baseParsed.filters,
+      resultIds: [],
+      intent: "conversation",
+      at: new Date().toISOString(),
+    };
+    const followUps = generalFollowUps();
+    hooks.onPartial?.({
+      kind: "conversation",
+      uiSpec: null,
+      events: [],
+      context,
+      semanticAvailable: false,
+      lowConfidence: false,
+      followUpSuggestions: followUps,
+    });
+    onProgress?.("Writing a reply");
+
+    let answer: string;
+    let modelUsed: string;
+    if (provider.kind === "none") {
+      answer = deterministicChatReply(cleanMessage);
+      modelUsed = "deterministic";
+      hooks.onDelta?.(answer);
+    } else {
+      const res = await streamWithProvider(
+        provider,
+        [
+          { role: "system", content: GENERAL_CHAT_SYSTEM_PROMPT },
+          ...history,
+          { role: "user", content: cleanMessage },
+        ],
+        hooks.onDelta,
+        1400,
+      );
+      answer = res.text || "I couldn't come up with a reply. Please try rephrasing.";
+      modelUsed = res.model;
+      if (!res.text) hooks.onDelta?.(answer);
+    }
+
+    const sessionId = await persistTurn(
+      input,
+      validSessionId,
+      cleanMessage,
+      assistantMessageId,
+      answer,
+      null,
+      context,
+      { kind: "conversation", modelUsed },
+    );
+    const latencyMs = Date.now() - started;
+    recordTelemetry({
+      kind: "chat",
+      status: "ok",
+      latencyMs,
+      query: cleanMessage.slice(0, 120),
+      intent: "conversation",
+      resultCount: 0,
+      model: modelUsed,
+    });
+    return {
+      sessionId,
+      messageId: assistantMessageId,
+      answer,
+      kind: "conversation",
+      uiSpec: null,
+      events: [],
+      context,
+      semanticAvailable: false,
+      lowConfidence: false,
+      modelUsed,
+      followUpSuggestions: followUps,
+      ...(securityNotice ? { securityNotice } : {}),
+      latencyMs,
+    };
+  }
+
+  // ── Grounded event search ───────────────────────────────────────────────────
+  const { parsed } = await refineIntentWithLLM(cleanMessage, baseParsed, provider);
 
   // Merge any explicit UI-toolbar filters
   if (input.explicitFilters) {
@@ -463,15 +617,6 @@ export async function runChatOrchestration(
     throw new HttpError(500, "ui_validation_failed", "Generated UI failed schema validation.");
   }
 
-  const { answer, modelUsed } = await synthesizeGroundedAnswer(
-    cleanMessage,
-    parsed,
-    events,
-    semanticAvailable,
-    lowConfidence,
-    input.model,
-  );
-
   const nextContext: ConversationContext = {
     query: cleanMessage,
     searchText: parsed.searchText,
@@ -485,57 +630,40 @@ export async function runChatOrchestration(
     intent: parsed.intent,
     at: new Date().toISOString(),
   };
+  const followUpSuggestions = buildFollowUpSuggestions(parsed, events);
 
-  let persistedSessionId: string | null = validSessionId;
-  const assistantMessageId = crypto.randomUUID();
+  hooks.onPartial?.({
+    kind: "search",
+    uiSpec: validated.data,
+    events,
+    context: nextContext,
+    semanticAvailable,
+    lowConfidence,
+    followUpSuggestions,
+  });
+  onProgress?.("Writing grounded answer");
 
-  if (input.auth) {
-    try {
-      if (!persistedSessionId) {
-        const { data: createdSession } = await input.auth.client
-          .from("chat_sessions")
-          .insert({
-            user_id: input.auth.userId,
-            tenant_id: input.workspaceId ?? null,
-            title: cleanMessage.slice(0, 80),
-          })
-          .select("id")
-          .single();
-        if (createdSession?.id) persistedSessionId = createdSession.id;
-      }
+  const { answer, modelUsed, notice } = await synthesizeGroundedAnswer(
+    cleanMessage,
+    parsed,
+    events,
+    semanticAvailable,
+    lowConfidence,
+    provider,
+    history,
+    hooks.onDelta,
+  );
 
-      if (persistedSessionId) {
-        await input.auth.client.from("chat_messages").insert([
-          {
-            session_id: persistedSessionId,
-            role: "user",
-            content: cleanMessage,
-            parts: [{ type: "text", text: cleanMessage }],
-            context: null,
-          },
-          {
-            id: assistantMessageId,
-            session_id: persistedSessionId,
-            role: "assistant",
-            content: answer,
-            parts: JSON.parse(
-              JSON.stringify([
-                { type: "text", text: answer },
-                { type: "ui_response", spec: validated.data },
-              ]),
-            ),
-            context: JSON.parse(JSON.stringify(nextContext)),
-          },
-        ]);
-        await input.auth.client
-          .from("chat_sessions")
-          .update({ updated_at: new Date().toISOString() })
-          .eq("id", persistedSessionId);
-      }
-    } catch (persistErr) {
-      console.error("[Chat persistence warning]", persistErr);
-    }
-  }
+  const persistedSessionId = await persistTurn(
+    input,
+    validSessionId,
+    cleanMessage,
+    assistantMessageId,
+    answer,
+    validated.data,
+    nextContext,
+    { kind: "search", modelUsed, semanticAvailable, lowConfidence },
+  );
 
   const latencyMs = Date.now() - started;
   recordTelemetry({
@@ -549,23 +677,20 @@ export async function runChatOrchestration(
     model: modelUsed,
   });
 
+  const combinedNotice = [securityNotice, notice].filter(Boolean).join(" ");
   return {
     sessionId: persistedSessionId,
     messageId: assistantMessageId,
     answer,
+    kind: "search",
     uiSpec: validated.data,
     events,
     context: nextContext,
     semanticAvailable,
     lowConfidence,
     modelUsed,
-    followUpSuggestions: buildFollowUpSuggestions(parsed, events),
-    ...(injectionScan.flagged
-      ? {
-          securityNotice:
-            "Query contained instruction-like text; retrieved records were treated strictly as untrusted data.",
-        }
-      : {}),
+    followUpSuggestions,
+    ...(combinedNotice ? { securityNotice: combinedNotice } : {}),
     latencyMs,
   };
 }
