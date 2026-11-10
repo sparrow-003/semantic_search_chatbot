@@ -21,8 +21,9 @@ export const Route = createFileRoute("/api/v1/workspaces/$id/members")({
     handlers: {
       GET: async ({ request, params }) => {
         const { errorResponse, jsonResponse } = await import("@/lib/server/rate-limit.server");
-        const { resolveAuthContext, assertWorkspaceAccess, HttpError } =
-          await import("@/lib/server/supabase.server");
+        const { resolveAuthContext, assertWorkspaceAccess, HttpError } = await import(
+          "@/lib/server/supabase.server"
+        );
         try {
           const auth = await resolveAuthContext(request, { required: true });
           await assertWorkspaceAccess(auth!.client, auth!.userId, params.id);
@@ -56,8 +57,9 @@ export const Route = createFileRoute("/api/v1/workspaces/$id/members")({
       },
 
       POST: async ({ request, params }) => {
-        const { errorResponse, jsonResponse, readBoundedJson } =
-          await import("@/lib/server/rate-limit.server");
+        const { errorResponse, jsonResponse, readBoundedJson } = await import(
+          "@/lib/server/rate-limit.server"
+        );
         const {
           resolveAuthContext,
           assertWorkspaceAccess,
@@ -113,10 +115,12 @@ export const Route = createFileRoute("/api/v1/workspaces/$id/members")({
       },
 
       PATCH: async ({ request, params }) => {
-        const { errorResponse, jsonResponse, readBoundedJson } =
-          await import("@/lib/server/rate-limit.server");
-        const { resolveAuthContext, assertWorkspaceAccess, HttpError } =
-          await import("@/lib/server/supabase.server");
+        const { errorResponse, jsonResponse, readBoundedJson } = await import(
+          "@/lib/server/rate-limit.server"
+        );
+        const { resolveAuthContext, assertWorkspaceAccess, HttpError } = await import(
+          "@/lib/server/supabase.server"
+        );
         try {
           const auth = await resolveAuthContext(request, { required: true });
           await assertWorkspaceAccess(auth!.client, auth!.userId, params.id, "admin");
@@ -139,10 +143,12 @@ export const Route = createFileRoute("/api/v1/workspaces/$id/members")({
       },
 
       DELETE: async ({ request, params }) => {
-        const { errorResponse, jsonResponse, readBoundedJson } =
-          await import("@/lib/server/rate-limit.server");
-        const { resolveAuthContext, assertWorkspaceAccess, HttpError } =
-          await import("@/lib/server/supabase.server");
+        const { errorResponse, jsonResponse, readBoundedJson } = await import(
+          "@/lib/server/rate-limit.server"
+        );
+        const { resolveAuthContext, assertWorkspaceAccess, HttpError } = await import(
+          "@/lib/server/supabase.server"
+        );
         try {
           const auth = await resolveAuthContext(request, { required: true });
           await assertWorkspaceAccess(auth!.client, auth!.userId, params.id);
@@ -163,3 +169,4 @@ export const Route = createFileRoute("/api/v1/workspaces/$id/members")({
     },
   },
 });
+

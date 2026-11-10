@@ -23,8 +23,9 @@ export const Route = createFileRoute("/api/v1/ui/generate")({
           recordTelemetry,
         } = await import("@/lib/server/rate-limit.server");
         const { resolveAuthContext, HttpError } = await import("@/lib/server/supabase.server");
-        const { executeSearch, fetchEventFacets, fetchEventsByIds } =
-          await import("@/lib/server/search.server");
+        const { executeSearch, fetchEventFacets, fetchEventsByIds } = await import(
+          "@/lib/server/search.server"
+        );
         const { parseUserIntent } = await import("@/lib/ai/intent-parser");
         const { composeUIResponse } = await import("@/lib/ai/ui-composer");
         const { validateUISpec } = await import("@/lib/ui/validator");
@@ -34,11 +35,7 @@ export const Route = createFileRoute("/api/v1/ui/generate")({
           checkRateLimit(getClientKey(request, auth?.userId), RATE_LIMITS.ui);
           const body = uiGenerateSchema.safeParse(await readBoundedJson(request));
           if (!body.success) {
-            throw new HttpError(
-              400,
-              "invalid_request",
-              body.error.issues[0]?.message ?? "Invalid UI generate request.",
-            );
+            throw new HttpError(400, "invalid_request", body.error.issues[0]?.message ?? "Invalid UI generate request.");
           }
 
           const parsed = parseUserIntent(body.data.query);
@@ -48,22 +45,13 @@ export const Route = createFileRoute("/api/v1/ui/generate")({
             parsed.intent === "generate_diagram" || parsed.intent === "generate_form"
               ? []
               : body.data.eventIds?.length
-                ? await fetchEventsByIds(
-                    body.data.eventIds,
-                    ws,
-                    auth,
-                    parsed.searchText,
-                    parsed.filters,
-                  )
+                ? await fetchEventsByIds(body.data.eventIds, ws, auth, parsed.searchText, parsed.filters)
                 : (
                     await executeSearch({
                       query: parsed.searchText,
                       mode: "hybrid",
                       filters: body.data.filters
-                        ? sanitizeFilters({
-                            ...parsed.filters,
-                            ...sanitizeFilters(body.data.filters),
-                          })
+                        ? sanitizeFilters({ ...parsed.filters, ...sanitizeFilters(body.data.filters) })
                         : parsed.filters,
                       signals: parsed.topics,
                       freeOnly: parsed.isFreeOnly,

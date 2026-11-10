@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
 import { apiFetch } from "@/lib/client/api";
 import { useWorkspace } from "@/lib/client/workspace-context";
 import type { EventFormat, EventRecord } from "@/lib/events/types";
@@ -69,42 +70,142 @@ function WorkspaceManagementPage() {
 
   const selectedWs = workspaces.find((w) => w.id === activeWorkspaceId) ?? workspaces[0] ?? null;
 
-  const { data: membersData } = useQuery({
+  const {
+    data: membersData,
+    isLoading: membersLoading,
+    error: membersError,
+  } = useQuery({
     queryKey: ["ws-members", selectedWs?.id],
     enabled: Boolean(user && selectedWs?.id),
-    queryFn: () =>
-      apiFetch<{ members: MemberRow[] }>(`/api/v1/workspaces/${selectedWs!.id}/members`),
+    queryFn: async () => {
+      try {
+        return await apiFetch<{ members: MemberRow[] }>(
+          `/api/v1/workspaces/${selectedWs!.id}/members`,
+        );
+      } catch {
+        const memberships = await supabase
+          .from("tenant_members")
+          .select("id, user_id, role")
+          .eq("tenant_id", selectedWs!.id);
+        if (memberships.error) throw new Error(memberships.error.message);
+        const userIds = (memberships.data ?? []).map((membership) => membership.user_id);
+        const profiles = userIds.length
+          ? await supabase.from("profiles").select("id, display_name").in("id", userIds)
+          : { data: [], error: null };
+        if (profiles.error) throw new Error(profiles.error.message);
+        return {
+          members: (memberships.data ?? []).map((membership) => ({
+            ...membership,
+            role: membership.role as MemberRow["role"],
+            display_name:
+              profiles.data?.find((profile) => profile.id === membership.user_id)?.display_name ??
+              membership.user_id,
+          })),
+        };
+      }
+    },
   });
 
-  const { data: wsEventsData } = useQuery({
+  const {
+    data: wsEventsData,
+    isLoading: eventsLoading,
+    error: eventsError,
+  } = useQuery({
     queryKey: ["ws-events", selectedWs?.id],
     enabled: Boolean(user && selectedWs?.id),
-    queryFn: () =>
-      apiFetch<{ events: Array<EventRecord & { indexStatus: string; status: string }> }>(
-        `/api/v1/events?workspaceId=${encodeURIComponent(selectedWs!.id)}`,
-      ),
+    queryFn: async () => {
+      try {
+        return await apiFetch<{
+          events: Array<EventRecord & { indexStatus: string; status: string }>;
+        }>(`/api/v1/events?workspaceId=${encodeURIComponent(selectedWs!.id)}`);
+      } catch {
+        const { data, error } = await supabase
+          .from("events")
+          .select(
+            "id, tenant_id, title, summary, description, category, format, start_at, end_at, venue, city, country, registration_url, technologies, audience, is_free, index_status, status",
+          )
+          .eq("tenant_id", selectedWs!.id)
+          .order("start_at", { ascending: true })
+          .limit(100);
+        if (error) throw new Error(error.message);
+        return {
+          events: (data ?? []).map((row) => ({
+            id: row.id,
+            tenantId: row.tenant_id,
+            title: row.title,
+            summary: row.summary,
+            description: row.description,
+            category: row.category,
+            format: row.format as EventFormat,
+            startAt: row.start_at,
+            endAt: row.end_at,
+            venue: row.venue,
+            city: row.city,
+            country: row.country,
+            registrationUrl: row.registration_url,
+            technologies: row.technologies,
+            audience: row.audience,
+            isFree: row.is_free,
+            indexStatus: row.index_status,
+            status: row.status,
+          })) as Array<EventRecord & { indexStatus: string; status: string }>,
+        };
+      }
+    },
   });
 
   const isAdminOrOwner = selectedWs?.role === "owner" || selectedWs?.role === "admin";
   const canEditEvents = isAdminOrOwner || selectedWs?.role === "editor";
 
-  const { data: auditData } = useQuery({
+  const {
+    data: auditData,
+    isLoading: auditLoading,
+    error: auditError,
+  } = useQuery({
     queryKey: ["ws-audit", selectedWs?.id],
     enabled: Boolean(user && selectedWs?.id && isAdminOrOwner),
-    queryFn: () => apiFetch<{ logs: AuditLogRow[] }>(`/api/v1/workspaces/${selectedWs!.id}/audit`),
+    queryFn: async () => {
+      try {
+        return await apiFetch<{ logs: AuditLogRow[] }>(
+          `/api/v1/workspaces/${selectedWs!.id}/audit`,
+        );
+      } catch {
+        const { data, error } = await supabase
+          .from("audit_logs")
+          .select("id, action, resource_type, resource_id, actor_id, metadata, created_at")
+          .eq("tenant_id", selectedWs!.id)
+          .order("created_at", { ascending: false })
+          .limit(100);
+        if (error) throw new Error(error.message);
+        return { logs: (data ?? []) as AuditLogRow[] };
+      }
+    },
   });
 
   const handleCreateWorkspace = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newWsName.trim()) return;
     try {
-      const res = await apiFetch<{ workspace: { id: string } }>("/api/v1/workspaces", {
-        method: "POST",
-        body: JSON.stringify({ name: newWsName.trim() }),
-      });
+      let workspaceId: string;
+      try {
+        const res = await apiFetch<{ workspace: { id: string } }>("/api/v1/workspaces", {
+          method: "POST",
+          body: JSON.stringify({ name: newWsName.trim() }),
+        });
+        workspaceId = res.workspace.id;
+      } catch {
+        if (!user) throw new Error("Sign in to create a workspace.");
+        const { data, error } = await supabase
+          .from("tenants")
+          .insert({ name: newWsName.trim(), created_by: user.id })
+          .select("id")
+          .single();
+        if (error) throw new Error(error.message);
+        workspaceId = data.id;
+      }
       setNewWsName("");
       await refreshWorkspaces();
-      setActiveWorkspaceId(res.workspace.id);
+      setActiveWorkspaceId(workspaceId);
       toast.success("Workspace created");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create workspace");
@@ -118,13 +219,27 @@ function WorkspaceManagementPage() {
       inviteValue.trim(),
     );
     try {
-      await apiFetch(`/api/v1/workspaces/${selectedWs.id}/members`, {
-        method: "POST",
-        body: JSON.stringify({
-          ...(isUuid ? { userId: inviteValue.trim() } : { email: inviteValue.trim() }),
+      try {
+        await apiFetch(`/api/v1/workspaces/${selectedWs.id}/members`, {
+          method: "POST",
+          body: JSON.stringify({
+            ...(isUuid ? { userId: inviteValue.trim() } : { email: inviteValue.trim() }),
+            role: inviteRole,
+          }),
+        });
+      } catch (apiError) {
+        if (!isUuid) {
+          throw new Error(
+            "Email invitations need the app server. Enter the member's user UUID to add them directly through Supabase.",
+          );
+        }
+        const { error } = await supabase.from("tenant_members").insert({
+          tenant_id: selectedWs.id,
+          user_id: inviteValue.trim(),
           role: inviteRole,
-        }),
-      });
+        });
+        if (error) throw new Error(error.message || (apiError instanceof Error ? apiError.message : "Unable to add member"));
+      }
       setInviteValue("");
       await queryClient.invalidateQueries({ queryKey: ["ws-members", selectedWs.id] });
       toast.success("Member added to workspace");
@@ -137,9 +252,7 @@ function WorkspaceManagementPage() {
     e.preventDefault();
     if (!selectedWs) return;
     try {
-      await apiFetch("/api/v1/events", {
-        method: "POST",
-        body: JSON.stringify({
+      const eventPayload = {
           workspaceId: selectedWs.id,
           title,
           summary,
@@ -155,13 +268,41 @@ function WorkspaceManagementPage() {
           audience: ["Developers"],
           isFree,
           status: "published",
-        }),
-      });
+        };
+      let indexedByServer = true;
+      try {
+        await apiFetch("/api/v1/events", {
+          method: "POST",
+          body: JSON.stringify(eventPayload),
+        });
+      } catch {
+        indexedByServer = false;
+        const { error } = await supabase.from("events").insert({
+          tenant_id: selectedWs.id,
+          title: eventPayload.title,
+          summary: eventPayload.summary,
+          description: eventPayload.description,
+          category: eventPayload.category,
+          format: eventPayload.format,
+          start_at: eventPayload.startAt,
+          city: eventPayload.city,
+          technologies: eventPayload.technologies,
+          audience: eventPayload.audience,
+          is_free: eventPayload.isFree,
+          status: eventPayload.status,
+          created_by: user?.id ?? null,
+        });
+        if (error) throw new Error(error.message);
+      }
       setTitle("");
       setSummary("");
       setDescription("");
       await queryClient.invalidateQueries({ queryKey: ["ws-events", selectedWs.id] });
-      toast.success("Workspace event published & queued for indexing");
+      toast.success(
+        indexedByServer
+          ? "Workspace event published and queued for indexing"
+          : "Event saved in Supabase. Semantic indexing will resume when the app server is available.",
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Unable to create event");
     }
@@ -172,12 +313,9 @@ function WorkspaceManagementPage() {
       <div className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              Team Workspaces &amp; Event Studio
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tight">Team Workspaces &amp; Event Studio</h1>
             <p className="text-xs text-muted-foreground">
-              Multi-tenant isolated workspaces with role-based permissions, private events, and
-              audit logs.
+              Multi-tenant isolated workspaces with role-based permissions, private events, and audit logs.
             </p>
           </div>
         </div>
@@ -185,10 +323,7 @@ function WorkspaceManagementPage() {
         {!user ? (
           <Alert>
             <AlertDescription className="flex flex-wrap items-center justify-between gap-2 text-xs">
-              <span>
-                Sign in to create team workspaces, manage role permissions, and publish private
-                tenant events.
-              </span>
+              <span>Sign in to create team workspaces, manage role permissions, and publish private tenant events.</span>
               <Button asChild size="sm">
                 <Link to="/auth">Sign in</Link>
               </Button>
@@ -207,6 +342,11 @@ function WorkspaceManagementPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
+                  {!workspaces.length && (
+                    <p className="text-xs text-muted-foreground">
+                      No workspace memberships were found. Create a workspace to get started.
+                    </p>
+                  )}
                   {workspaces.map((ws) => (
                     <div
                       key={ws.id}
@@ -256,23 +396,19 @@ function WorkspaceManagementPage() {
             {selectedWs && (
               <Tabs defaultValue="members">
                 <TabsList>
-                  <TabsTrigger value="members" className="text-xs">
-                    Members &amp; Roles
-                  </TabsTrigger>
-                  <TabsTrigger value="events" className="text-xs">
-                    Workspace Events
-                  </TabsTrigger>
+                  <TabsTrigger value="members" className="text-xs">Members &amp; Roles</TabsTrigger>
+                  <TabsTrigger value="events" className="text-xs">Workspace Events</TabsTrigger>
                   {isAdminOrOwner && (
-                    <TabsTrigger value="audit" className="text-xs">
-                      Audit Logs
-                    </TabsTrigger>
+                    <TabsTrigger value="audit" className="text-xs">Audit Logs</TabsTrigger>
                   )}
                 </TabsList>
 
                 <TabsContent value="members" className="mt-4 space-y-4">
                   <Card>
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-base">Members — {selectedWs.name}</CardTitle>
+                      <CardTitle className="text-base">
+                        Members — {selectedWs.name}
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {isAdminOrOwner && (
@@ -304,6 +440,20 @@ function WorkspaceManagementPage() {
                         </form>
                       )}
 
+                      {membersLoading && (
+                        <p className="text-xs text-muted-foreground">Loading live workspace members…</p>
+                      )}
+                      {membersError && (
+                        <Alert variant="destructive">
+                          <AlertDescription className="text-xs">
+                            Unable to load members: {membersError.message}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                      {!membersLoading && !membersError && !membersData?.members.length && (
+                        <p className="text-xs text-muted-foreground">No members found.</p>
+                      )}
+
                       <div className="space-y-2">
                         {(membersData?.members ?? []).map((m) => (
                           <div
@@ -321,14 +471,34 @@ function WorkspaceManagementPage() {
                                 <Select
                                   value={m.role}
                                   onValueChange={async (role) => {
-                                    await apiFetch(`/api/v1/workspaces/${selectedWs.id}/members`, {
-                                      method: "PATCH",
-                                      body: JSON.stringify({ userId: m.user_id, role }),
-                                    });
-                                    await queryClient.invalidateQueries({
-                                      queryKey: ["ws-members", selectedWs.id],
-                                    });
-                                    toast.success("Role updated");
+                                    try {
+                                      try {
+                                        await apiFetch(
+                                          `/api/v1/workspaces/${selectedWs.id}/members`,
+                                          {
+                                            method: "PATCH",
+                                            body: JSON.stringify({ userId: m.user_id, role }),
+                                          },
+                                        );
+                                      } catch {
+                                        const { data, error } = await supabase
+                                          .from("tenant_members")
+                                          .update({ role: role as MemberRow["role"] })
+                                          .eq("tenant_id", selectedWs.id)
+                                          .eq("user_id", m.user_id)
+                                          .select("id")
+                                          .maybeSingle();
+                                        if (error || !data) {
+                                          throw new Error(error?.message ?? "Role update was denied.");
+                                        }
+                                      }
+                                      await queryClient.invalidateQueries({
+                                        queryKey: ["ws-members", selectedWs.id],
+                                      });
+                                      toast.success("Role updated");
+                                    } catch (err) {
+                                      toast.error(err instanceof Error ? err.message : "Unable to update role");
+                                    }
                                   }}
                                 >
                                   <SelectTrigger className="h-7 w-[110px] text-xs">
@@ -352,14 +522,30 @@ function WorkspaceManagementPage() {
                                   variant="ghost"
                                   className="size-7 text-destructive"
                                   onClick={async () => {
-                                    await apiFetch(`/api/v1/workspaces/${selectedWs.id}/members`, {
-                                      method: "DELETE",
-                                      body: JSON.stringify({ userId: m.user_id }),
-                                    });
-                                    await queryClient.invalidateQueries({
-                                      queryKey: ["ws-members", selectedWs.id],
-                                    });
-                                    toast.success("Member removed");
+                                    try {
+                                      try {
+                                        await apiFetch(
+                                          `/api/v1/workspaces/${selectedWs.id}/members`,
+                                          {
+                                            method: "DELETE",
+                                            body: JSON.stringify({ userId: m.user_id }),
+                                          },
+                                        );
+                                      } catch {
+                                        const { error } = await supabase
+                                          .from("tenant_members")
+                                          .delete()
+                                          .eq("tenant_id", selectedWs.id)
+                                          .eq("user_id", m.user_id);
+                                        if (error) throw new Error(error.message);
+                                      }
+                                      await queryClient.invalidateQueries({
+                                        queryKey: ["ws-members", selectedWs.id],
+                                      });
+                                      toast.success("Member removed");
+                                    } catch (err) {
+                                      toast.error(err instanceof Error ? err.message : "Unable to remove member");
+                                    }
                                   }}
                                 >
                                   <Trash2 className="size-3.5" />
@@ -378,39 +564,23 @@ function WorkspaceManagementPage() {
                     <Card>
                       <CardHeader className="pb-3">
                         <CardTitle className="flex items-center gap-2 text-base">
-                          <CalendarPlus className="size-4 text-primary" /> Add Private Workspace
-                          Event
+                          <CalendarPlus className="size-4 text-primary" /> Add Private Workspace Event
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <form onSubmit={handleCreateEvent} className="grid gap-3 sm:grid-cols-2">
                           <div className="space-y-1">
                             <Label className="text-xs">Title *</Label>
-                            <Input
-                              required
-                              value={title}
-                              onChange={(e) => setTitle(e.target.value)}
-                              className="h-8 text-xs"
-                            />
+                            <Input required value={title} onChange={(e) => setTitle(e.target.value)} className="h-8 text-xs" />
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Category *</Label>
-                            <Input
-                              required
-                              value={category}
-                              onChange={(e) => setCategory(e.target.value)}
-                              className="h-8 text-xs"
-                            />
+                            <Input required value={category} onChange={(e) => setCategory(e.target.value)} className="h-8 text-xs" />
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Format</Label>
-                            <Select
-                              value={format}
-                              onValueChange={(v) => setFormat(v as EventFormat)}
-                            >
-                              <SelectTrigger className="h-8 text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
+                            <Select value={format} onValueChange={(v) => setFormat(v as EventFormat)}>
+                              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="online">Online</SelectItem>
                                 <SelectItem value="in_person">In person</SelectItem>
@@ -420,58 +590,30 @@ function WorkspaceManagementPage() {
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Start Date &amp; Time</Label>
-                            <Input
-                              type="datetime-local"
-                              value={startAt}
-                              onChange={(e) => setStartAt(e.target.value)}
-                              className="h-8 text-xs"
-                            />
+                            <Input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} className="h-8 text-xs" />
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Technologies (comma separated)</Label>
-                            <Input
-                              value={techs}
-                              onChange={(e) => setTechs(e.target.value)}
-                              className="h-8 text-xs"
-                            />
+                            <Input value={techs} onChange={(e) => setTechs(e.target.value)} className="h-8 text-xs" />
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">City (optional)</Label>
-                            <Input
-                              value={city}
-                              onChange={(e) => setCity(e.target.value)}
-                              className="h-8 text-xs"
-                            />
+                            <Input value={city} onChange={(e) => setCity(e.target.value)} className="h-8 text-xs" />
                           </div>
                           <div className="space-y-1 sm:col-span-2">
                             <Label className="text-xs">Summary</Label>
-                            <Input
-                              value={summary}
-                              onChange={(e) => setSummary(e.target.value)}
-                              className="h-8 text-xs"
-                            />
+                            <Input value={summary} onChange={(e) => setSummary(e.target.value)} className="h-8 text-xs" />
                           </div>
                           <div className="space-y-1 sm:col-span-2">
                             <Label className="text-xs">Description</Label>
-                            <Textarea
-                              value={description}
-                              onChange={(e) => setDescription(e.target.value)}
-                              className="text-xs"
-                              rows={2}
-                            />
+                            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="text-xs" rows={2} />
                           </div>
                           <div className="flex items-center justify-between sm:col-span-2">
                             <label className="flex items-center gap-2 text-xs">
-                              <input
-                                type="checkbox"
-                                checked={isFree}
-                                onChange={(e) => setIsFree(e.target.checked)}
-                              />
+                              <input type="checkbox" checked={isFree} onChange={(e) => setIsFree(e.target.checked)} />
                               Free admission
                             </label>
-                            <Button type="submit" size="sm">
-                              Publish Event
-                            </Button>
+                            <Button type="submit" size="sm">Publish Event</Button>
                           </div>
                         </form>
                       </CardContent>
@@ -483,16 +625,22 @@ function WorkspaceManagementPage() {
                       <CardTitle className="text-base">Workspace Private Events</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-xs">
-                      {!wsEventsData?.events.length ? (
-                        <p className="text-muted-foreground">
-                          No private events in this workspace yet.
-                        </p>
+                      {eventsLoading && <p className="text-muted-foreground">Loading live events…</p>}
+                      {eventsError && (
+                        <Alert variant="destructive">
+                          <AlertDescription className="text-xs">
+                            Unable to load workspace events: {eventsError.message}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                      {!eventsLoading && !eventsError && !wsEventsData?.events.length && (
+                        <p className="text-muted-foreground">No private events in this workspace yet.</p>
+                      )}
+                      {!(wsEventsData?.events.length) ? (
+                        null
                       ) : (
                         wsEventsData.events.map((ev) => (
-                          <div
-                            key={ev.id}
-                            className="flex items-center justify-between rounded-lg border p-3"
-                          >
+                          <div key={ev.id} className="flex items-center justify-between rounded-lg border p-3">
                             <div>
                               <div className="font-semibold">{ev.title}</div>
                               <div className="text-muted-foreground">
@@ -506,11 +654,23 @@ function WorkspaceManagementPage() {
                                 variant="ghost"
                                 className="size-7 text-destructive"
                                 onClick={async () => {
-                                  await apiFetch(`/api/v1/events/${ev.id}`, { method: "DELETE" });
-                                  await queryClient.invalidateQueries({
-                                    queryKey: ["ws-events", selectedWs.id],
-                                  });
-                                  toast.success("Event deleted");
+                                  try {
+                                    try {
+                                      await apiFetch(`/api/v1/events/${ev.id}`, { method: "DELETE" });
+                                    } catch {
+                                      const { error } = await supabase
+                                        .from("events")
+                                        .delete()
+                                        .eq("id", ev.id);
+                                      if (error) throw new Error(error.message);
+                                    }
+                                    await queryClient.invalidateQueries({
+                                      queryKey: ["ws-events", selectedWs.id],
+                                    });
+                                    toast.success("Event deleted");
+                                  } catch (err) {
+                                    toast.error(err instanceof Error ? err.message : "Unable to delete event");
+                                  }
                                 }}
                               >
                                 <Trash2 className="size-3.5" />
@@ -532,18 +692,23 @@ function WorkspaceManagementPage() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-2 text-xs">
-                        {!auditData?.logs.length ? (
-                          <p className="text-muted-foreground">No audit entries yet.</p>
+                        {auditLoading && <p className="text-muted-foreground">Loading live audit entries…</p>}
+                        {auditError && (
+                          <Alert variant="destructive">
+                            <AlertDescription className="text-xs">
+                              Unable to load audit logs: {auditError.message}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                        {!(auditData?.logs.length) ? (
+                          !auditLoading && !auditError && (
+                            <p className="text-muted-foreground">No audit entries yet.</p>
+                          )
                         ) : (
                           auditData.logs.map((log) => (
-                            <div
-                              key={log.id}
-                              className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-2"
-                            >
+                            <div key={log.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-2">
                               <div>
-                                <Badge variant="outline" className="mr-2 text-[10px]">
-                                  {log.action}
-                                </Badge>
+                                <Badge variant="outline" className="mr-2 text-[10px]">{log.action}</Badge>
                                 <span className="font-medium">{log.resource_type}</span>
                                 <span className="ml-2 text-muted-foreground">
                                   {JSON.stringify(log.metadata)}
@@ -567,3 +732,4 @@ function WorkspaceManagementPage() {
     </AppShell>
   );
 }
+

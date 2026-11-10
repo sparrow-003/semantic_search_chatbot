@@ -25,10 +25,8 @@ export function ComparisonTableBlock({ props }: { props: ComparisonProps }) {
   const sorted = useMemo(() => {
     return [...props.events].sort((a, b) => {
       if (sortBy === "score") return b.score - a.score;
-      if (sortBy === "category")
-        return a.category.localeCompare(b.category) || a.startAt.localeCompare(b.startAt);
-      if (sortBy === "format")
-        return a.format.localeCompare(b.format) || a.startAt.localeCompare(b.startAt);
+      if (sortBy === "category") return a.category.localeCompare(b.category) || a.startAt.localeCompare(b.startAt);
+      if (sortBy === "format") return a.format.localeCompare(b.format) || a.startAt.localeCompare(b.startAt);
       return a.startAt.localeCompare(b.startAt);
     });
   }, [props.events, sortBy]);
@@ -50,11 +48,7 @@ export function ComparisonTableBlock({ props }: { props: ComparisonProps }) {
               className="h-7 px-2 text-xs"
               onClick={() => setSortBy(key)}
             >
-              {key === "startAt"
-                ? "Date"
-                : key === "score"
-                  ? "Relevance"
-                  : key.charAt(0).toUpperCase() + key.slice(1)}
+              {key === "startAt" ? "Date" : key === "score" ? "Relevance" : key.charAt(0).toUpperCase() + key.slice(1)}
             </Button>
           ))}
           <Button
@@ -63,11 +57,7 @@ export function ComparisonTableBlock({ props }: { props: ComparisonProps }) {
             variant="outline"
             className="h-7 gap-1 px-2 text-xs"
             onClick={() =>
-              triggerDownload(
-                "event-comparison.csv",
-                eventsToCsv(sorted as RankedEvent[]),
-                "text/csv;charset=utf-8",
-              )
+              triggerDownload("event-comparison.csv", eventsToCsv(sorted as RankedEvent[]), "text/csv;charset=utf-8")
             }
           >
             <Download className="size-3" /> CSV
@@ -111,7 +101,7 @@ export function ComparisonTableBlock({ props }: { props: ComparisonProps }) {
                     <Badge variant="outline">{FORMAT_LABELS[ev.format]}</Badge>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {ev.city ? `${ev.city}` : (ev.venue ?? "Virtual")}
+                    {ev.city ? `${ev.city}` : ev.venue ?? "Virtual"}
                   </TableCell>
                   <TableCell className="text-xs">
                     <div className="flex flex-wrap gap-1">
@@ -135,3 +125,4 @@ export function ComparisonTableBlock({ props }: { props: ComparisonProps }) {
     </Card>
   );
 }
+

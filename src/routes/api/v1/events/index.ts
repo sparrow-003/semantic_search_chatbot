@@ -46,8 +46,7 @@ export const Route = createFileRoute("/api/v1/events/")({
           const url = new URL(request.url);
           const ws = url.searchParams.get("workspaceId");
           if (ws) {
-            if (!isValidUuid(ws))
-              throw new HttpError(400, "invalid_workspace", "Invalid workspaceId.");
+            if (!isValidUuid(ws)) throw new HttpError(400, "invalid_workspace", "Invalid workspaceId.");
             if (!auth) throw new HttpError(401, "unauthorized", "Authentication required.");
             await assertWorkspaceAccess(auth.client, auth.userId, ws);
           }
@@ -102,11 +101,7 @@ export const Route = createFileRoute("/api/v1/events/")({
           checkRateLimit(getClientKey(request, auth!.userId), RATE_LIMITS.default);
           const parsed = eventInputSchema.safeParse(await readBoundedJson(request));
           if (!parsed.success) {
-            throw new HttpError(
-              400,
-              "invalid_request",
-              parsed.error.issues[0]?.message ?? "Invalid event payload.",
-            );
+            throw new HttpError(400, "invalid_request", parsed.error.issues[0]?.message ?? "Invalid event payload.");
           }
 
           const ws = parsed.data.workspaceId ?? null;
@@ -115,11 +110,7 @@ export const Route = createFileRoute("/api/v1/events/")({
           } else {
             const adminRole = await isPlatformAdmin(auth!.client, auth!.userId);
             if (!adminRole) {
-              throw new HttpError(
-                403,
-                "forbidden",
-                "Select a workspace where you are an editor to create events.",
-              );
+              throw new HttpError(403, "forbidden", "Select a workspace where you are an editor to create events.");
             }
           }
 
@@ -166,3 +157,4 @@ export const Route = createFileRoute("/api/v1/events/")({
     },
   },
 });
+

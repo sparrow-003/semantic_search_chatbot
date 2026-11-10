@@ -69,11 +69,7 @@ function ProfilePage() {
 
       const { error: profErr } = await supabase
         .from("profiles")
-        .upsert({
-          id: user.id,
-          display_name: displayName || user.email?.split("@")[0] || "User",
-          avatar_url: path,
-        });
+        .upsert({ id: user.id, display_name: displayName || user.email?.split("@")[0] || "User", avatar_url: path });
       if (profErr) throw profErr;
 
       await refreshProfile();
@@ -137,9 +133,7 @@ function ProfilePage() {
 
               <form onSubmit={handleSaveName} className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="prof-name" className="text-xs">
-                    Display Name
-                  </Label>
+                  <Label htmlFor="prof-name" className="text-xs">Display Name</Label>
                   <Input
                     id="prof-name"
                     value={displayName}
@@ -159,3 +153,4 @@ function ProfilePage() {
     </AppShell>
   );
 }
+

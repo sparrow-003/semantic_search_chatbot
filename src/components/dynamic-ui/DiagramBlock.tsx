@@ -215,11 +215,7 @@ export function DiagramBlock({ props }: { props: DiagramProps }) {
             variant="ghost"
             size="sm"
             className="h-7 gap-1 px-2 text-xs"
-            onClick={() =>
-              setPendingChatPrompt(
-                `Regenerate the ${props.diagramType.replace("_", " ")} diagram with more detail`,
-              )
-            }
+            onClick={() => setPendingChatPrompt(`Regenerate the ${props.diagramType.replace("_", " ")} diagram with more detail`)}
           >
             <RefreshCw className="size-3" /> Regenerate
           </Button>
@@ -292,9 +288,7 @@ export function DiagramBlock({ props }: { props: DiagramProps }) {
                 dangerouslySetInnerHTML={{ __html: mermaidSvg }}
               />
             ) : (
-              <div className="p-6 text-center text-xs text-muted-foreground">
-                Rendering Mermaid diagram...
-              </div>
+              <div className="p-6 text-center text-xs text-muted-foreground">Rendering Mermaid diagram...</div>
             )}
           </TabsContent>
 
@@ -324,3 +318,4 @@ export function DiagramBlock({ props }: { props: DiagramProps }) {
     </Card>
   );
 }
+

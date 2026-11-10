@@ -60,10 +60,7 @@ export function checkRateLimit(key: string, config: RateLimitConfig): void {
   }
 }
 
-export async function readBoundedJson<T = unknown>(
-  request: Request,
-  maxBytes = 65_536,
-): Promise<T> {
+export async function readBoundedJson<T = unknown>(request: Request, maxBytes = 65_536): Promise<T> {
   const contentLength = request.headers.get("content-length");
   if (contentLength && Number(contentLength) > maxBytes) {
     throw new HttpError(413, "payload_too_large", `Request exceeds ${maxBytes} byte limit.`);
@@ -87,11 +84,7 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Cache-Control": "no-store",
 };
 
-export function jsonResponse(
-  data: unknown,
-  status = 200,
-  extraHeaders?: Record<string, string>,
-): Response {
+export function jsonResponse(data: unknown, status = 200, extraHeaders?: Record<string, string>): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -160,3 +153,4 @@ export function recordTelemetry(ev: Omit<TelemetryEvent, "at">): void {
 export function getTelemetryEvents(): TelemetryEvent[] {
   return telemetryBuffer;
 }
+

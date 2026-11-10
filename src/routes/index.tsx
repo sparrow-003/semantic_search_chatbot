@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   ArrowUp,
@@ -13,6 +13,7 @@ import {
   RefreshCw,
   RotateCcw,
   SlidersHorizontal,
+  Settings2,
   Sparkles,
   Square,
   TableProperties,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import scoutLogo from "@/assets/scout-logo.png";
+import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import {
   Conversation,
@@ -41,7 +43,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { apiFetch, sendChatMessageStream, submitSearchFeedback } from "@/lib/client/api";
+import {
+  apiFetch,
+  sendChatMessageStream,
+  submitSearchFeedback,
+  type ChatTurnPartial,
+  type ChatTurnResult,
+} from "@/lib/client/api";
+import { loadBrowserChatSession, runBrowserChatTurn } from "@/lib/client/browser-chat";
+import {
+  BUILT_IN_MODELS,
+  hasCompletedModelSettingsSetup,
+  useModelSettings,
+} from "@/lib/client/model-settings";
 import {
   turnResultToAssistantMessage,
   useWorkspace,
@@ -57,15 +71,6 @@ export const Route = createFileRoute("/")({
   }),
   component: ChatWorkspacePage,
 });
-
-const MODEL_OPTIONS = [
-  { id: "google/gemini-3-flash-preview", label: "Gemini 3 Flash" },
-  { id: "google/gemini-3.8-flash", label: "Gemini 3.8 Flash" },
-  { id: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-  { id: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro" },
-  { id: "openai/gpt-5-mini", label: "GPT-5 Mini" },
-  { id: "openai/gpt-5.4", label: "GPT-5.4" },
-];
 
 const STARTER_PROMPTS = [
   {
@@ -101,8 +106,22 @@ const STARTER_PROMPTS = [
   },
 ];
 
+function isChatServerUnavailable(err: unknown): boolean {
+  if (err instanceof TypeError) return true;
+  const message = err instanceof Error ? err.message : String(err);
+  return /Chat failed \((404|500|502|503|504)\)|failed to fetch|networkerror|load failed/i.test(
+    message,
+  );
+}
+
 function ChatWorkspacePage() {
   const queryClient = useQueryClient();
+  const {
+    settings,
+    update: updateModelSettings,
+    openRouterReady,
+    ready: modelSettingsReady,
+  } = useModelSettings();
   const {
     user,
     activeWorkspaceId,
@@ -113,16 +132,41 @@ function ChatWorkspacePage() {
   } = useWorkspace();
 
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionSource, setSessionSource] = useState<"remote" | "local" | null>(null);
   const [sessionSaved, setSessionSaved] = useState(false);
   const [messages, setMessages] = useState<LocalChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [mode, setMode] = useState<SearchMode>("hybrid");
-  const [model, setModel] = useState<string>("google/gemini-3-flash-preview");
+  const [modelSettingsOpen, setModelSettingsOpen] = useState(false);
+  const [modelSetupComplete, setModelSetupComplete] = useState(false);
   const [loadingStage, setLoadingStage] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [activeContext, setActiveContext] = useState<ConversationContext | null>(null);
   const [activeTableConfig, setActiveTableConfig] = useState<DataTableConfig | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  const model =
+    settings.provider === "openrouter" ? settings.openRouterModel : settings.lovableModel;
+  const modelOptions =
+    settings.provider === "openrouter"
+      ? settings.openRouterModels.map((item) => ({ id: item.id, label: item.name }))
+      : BUILT_IN_MODELS;
+
+  useEffect(() => {
+    if (hasCompletedModelSettingsSetup()) setModelSetupComplete(true);
+  }, []);
+
+  const { data: health } = useQuery({
+    queryKey: ["api-health"],
+    queryFn: () =>
+      apiFetch<{
+        schemaReady: boolean;
+        schemaError?: string;
+        hasEvents?: boolean;
+        eventCount?: number;
+      }>("/api/v1/health"),
+    staleTime: 60_000,
+  });
 
   const loadSession = useCallback(
     async (id: string) => {
@@ -143,6 +187,7 @@ function ChatWorkspacePage() {
             }>(`/api/v1/chat/sessions/${id}/messages`),
           ]);
           setSessionId(id);
+          setSessionSource("remote");
           setSessionSaved(sessRes.session.is_saved);
           const hydrated: LocalChatMessage[] = msgRes.messages.map((m) => {
             const parts = Array.isArray(m.parts) ? m.parts : [];
@@ -162,12 +207,51 @@ function ChatWorkspacePage() {
           const lastCtx = [...hydrated].reverse().find((m) => m.context)?.context ?? null;
           setActiveContext(lastCtx);
         } catch (err) {
-          toast.error(err instanceof Error ? err.message : "Unable to load conversation");
+          try {
+            const browserSession = await loadBrowserChatSession(id);
+            if (browserSession) {
+              setSessionId(id);
+              setSessionSource("remote");
+              setSessionSaved(browserSession.session.is_saved);
+              const hydrated: LocalChatMessage[] = browserSession.messages.map((m) => {
+                const parts = Array.isArray(m.parts) ? m.parts : [];
+                const uiPart = parts.find((p): p is { type: "ui_response"; spec: UIResponse } =>
+                  Boolean(p && typeof p === "object" && "type" in p && p["type"] === "ui_response"),
+                );
+                return {
+                  id: m.id,
+                  role: m.role as "user" | "assistant",
+                  content: m.content,
+                  ...(uiPart?.spec ? { uiSpec: uiPart.spec } : {}),
+                  ...(m.context ? { context: m.context as unknown as ConversationContext } : {}),
+                  createdAt: m.created_at,
+                };
+              });
+              setMessages(hydrated);
+              const lastCtx = [...hydrated].reverse().find((m) => m.context)?.context ?? null;
+              setActiveContext(lastCtx);
+              return;
+            }
+          } catch {
+            // Fall back to the browser copy if Supabase is unavailable.
+          }
+          const local = localSessions.find((s) => s.id === id);
+          if (local) {
+            setSessionId(local.id);
+            setSessionSource("local");
+            setSessionSaved(local.isSaved);
+            setMessages(local.messages);
+            const lastCtx = [...local.messages].reverse().find((m) => m.context)?.context ?? null;
+            setActiveContext(lastCtx);
+          } else {
+            toast.error(err instanceof Error ? err.message : "Unable to load conversation");
+          }
         }
       } else {
         const local = localSessions.find((s) => s.id === id);
         if (local) {
           setSessionId(local.id);
+          setSessionSource("local");
           setSessionSaved(local.isSaved);
           setMessages(local.messages);
           const lastCtx = [...local.messages].reverse().find((m) => m.context)?.context ?? null;
@@ -190,6 +274,7 @@ function ChatWorkspacePage() {
   const startNewChat = useCallback(() => {
     abortRef.current?.abort();
     setSessionId(null);
+    setSessionSource(null);
     setSessionSaved(false);
     setMessages([]);
     setActiveContext(null);
@@ -201,7 +286,16 @@ function ChatWorkspacePage() {
   const submitPrompt = useCallback(
     async (text: string, explicitFilters?: Partial<SearchFilters>) => {
       const clean = text.trim();
-      if (!clean || loadingStage) return;
+      if (!clean || loadingStage || !modelSettingsReady) return;
+      if (!modelSetupComplete) {
+        setModelSettingsOpen(true);
+        return;
+      }
+      if (settings.provider === "openrouter" && !openRouterReady) {
+        setErrorMsg("Connect an OpenRouter key in AI model settings before sending a message.");
+        setModelSettingsOpen(true);
+        return;
+      }
 
       setErrorMsg(null);
       setInput("");
@@ -212,33 +306,78 @@ function ChatWorkspacePage() {
         createdAt: new Date().toISOString(),
       };
       const nextMsgs = [...messages, userMsg];
-      setMessages(nextMsgs);
+      const streamMessageId = crypto.randomUUID();
+      setMessages([
+        ...nextMsgs,
+        {
+          id: streamMessageId,
+          role: "assistant",
+          content: "",
+          streaming: true,
+          createdAt: new Date().toISOString(),
+        },
+      ]);
       setLoadingStage("Understanding your question");
 
       const controller = new AbortController();
       abortRef.current = controller;
 
       try {
-        const result = await sendChatMessageStream(
-          {
-            message: clean,
-            sessionId: user ? sessionId : null,
-            workspaceId: activeWorkspaceId,
-            mode,
-            model,
-            ...(explicitFilters ? { explicitFilters } : {}),
-            context: activeContext,
-            prevTableConfig: activeTableConfig,
+        const payload = {
+          message: clean,
+          sessionId: user && sessionSource === "remote" ? sessionId : null,
+          workspaceId: activeWorkspaceId,
+          mode,
+          model,
+          provider: settings.provider,
+          chatMode: settings.chatMode,
+          history: messages.slice(-12).map((m) => ({ role: m.role, content: m.content })),
+          ...(explicitFilters ? { explicitFilters } : {}),
+          context: activeContext,
+          prevTableConfig: activeTableConfig,
+        };
+        const callbacks = {
+          onStatus: (stage: string) => setLoadingStage(stage),
+          onPartial: (partial: ChatTurnPartial) => {
+            setMessages((current) =>
+              current.map((message) => {
+                if (message.id !== streamMessageId) return message;
+                const { uiSpec, ...partialMetadata } = partial;
+                return { ...message, ...partialMetadata, ...(uiSpec ? { uiSpec } : {}) };
+              }),
+            );
           },
-          {
-            onStatus: (stage) => setLoadingStage(stage),
-            signal: controller.signal,
+          onDelta: (delta: string) => {
+            setMessages((current) =>
+              current.map((message) =>
+                message.id === streamMessageId
+                  ? { ...message, content: message.content + delta }
+                  : message,
+              ),
+            );
           },
-        );
+          signal: controller.signal,
+          openRouterKey: settings.provider === "openrouter" ? settings.openRouterKey : null,
+        };
+
+        let result: ChatTurnResult;
+        try {
+          result = await sendChatMessageStream(payload, callbacks);
+        } catch (err) {
+          if (controller.signal.aborted || !isChatServerUnavailable(err)) throw err;
+          setLoadingStage("Chat server unavailable — switching to browser mode");
+          result = await runBrowserChatTurn(
+            { ...payload, userId: user?.id ?? null, openRouterKey: callbacks.openRouterKey },
+            callbacks,
+          );
+        }
 
         const assistantMsg = turnResultToAssistantMessage(result);
         const updatedMsgs = [...nextMsgs, assistantMsg];
-        setMessages(updatedMsgs);
+        setMessages((current) => [
+          ...current.filter((message) => message.id !== streamMessageId),
+          assistantMsg,
+        ]);
         setActiveContext(result.context);
 
         const tableComp = result.uiSpec?.components.find((c) => c.type === "data_table");
@@ -246,12 +385,15 @@ function ChatWorkspacePage() {
           setActiveTableConfig(tableComp.props.config);
         }
 
-        const resolvedSid = result.sessionId ?? sessionId ?? crypto.randomUUID();
-        if (!sessionId) setSessionId(resolvedSid);
+        const resolvedSid =
+          result.sessionId ?? (sessionSource === "local" ? sessionId : null) ?? crypto.randomUUID();
+        setSessionId(resolvedSid);
+        setSessionSource(user && result.sessionId ? "remote" : "local");
 
-        if (user) {
+        if (user && result.sessionId) {
           void queryClient.invalidateQueries({ queryKey: ["chat-sessions"] });
-        } else {
+        }
+        if (!user || !result.sessionId) {
           saveLocalSession({
             id: resolvedSid,
             title: nextMsgs[0]?.content.slice(0, 70) || clean.slice(0, 70),
@@ -262,6 +404,7 @@ function ChatWorkspacePage() {
           });
         }
       } catch (err) {
+        setMessages((current) => current.filter((message) => message.id !== streamMessageId));
         if (controller.signal.aborted) {
           setErrorMsg("Generation stopped.");
         } else {
@@ -279,23 +422,35 @@ function ChatWorkspacePage() {
       loadingStage,
       messages,
       mode,
+      modelSetupComplete,
+      modelSettingsReady,
       model,
+      openRouterReady,
       queryClient,
       saveLocalSession,
       sessionId,
+      sessionSource,
       sessionSaved,
+      settings,
       user,
     ],
   );
 
   // Handle cross-page prompt jumps ("Find Similar in Chat" / "Template: React Analytics")
   useEffect(() => {
-    if (pendingChatPrompt && !loadingStage) {
+    if (pendingChatPrompt && !loadingStage && modelSettingsReady && modelSetupComplete) {
       const p = pendingChatPrompt;
       setPendingChatPrompt(null);
       void submitPrompt(p);
     }
-  }, [pendingChatPrompt, setPendingChatPrompt, loadingStage, submitPrompt]);
+  }, [
+    pendingChatPrompt,
+    setPendingChatPrompt,
+    loadingStage,
+    modelSettingsReady,
+    modelSetupComplete,
+    submitPrompt,
+  ]);
 
   const handleDynamicFormSubmit = (action: AllowedFormAction, values: Record<string, unknown>) => {
     if (action === "filter_search") {
@@ -343,7 +498,7 @@ function ChatWorkspacePage() {
   const toggleSaveSession = async () => {
     const nextSaved = !sessionSaved;
     setSessionSaved(nextSaved);
-    if (user && sessionId) {
+    if (user && sessionId && sessionSource === "remote") {
       try {
         await apiFetch(`/api/v1/chat/sessions/${sessionId}`, {
           method: "PATCH",
@@ -351,13 +506,32 @@ function ChatWorkspacePage() {
         });
         await queryClient.invalidateQueries({ queryKey: ["chat-sessions"] });
       } catch {
-        setSessionSaved(!nextSaved);
+        const { data, error } = await supabase
+          .from("chat_sessions")
+          .update({ is_saved: nextSaved })
+          .eq("id", sessionId)
+          .select("id")
+          .maybeSingle();
+        if (error || !data) {
+          setSessionSaved(!nextSaved);
+          toast.error(error?.message ?? "Unable to update this conversation.");
+          return;
+        }
+        await queryClient.invalidateQueries({ queryKey: ["chat-sessions"] });
       }
     } else if (sessionId) {
       const existing = localSessions.find((s) => s.id === sessionId);
-      if (existing) {
-        saveLocalSession({ ...existing, isSaved: nextSaved });
-      }
+      saveLocalSession({
+        id: sessionId,
+        title:
+          existing?.title ??
+          messages.find((m) => m.role === "user")?.content.slice(0, 70) ??
+          "New conversation",
+        isSaved: nextSaved,
+        workspaceId: existing?.workspaceId ?? activeWorkspaceId,
+        messages,
+        updatedAt: new Date().toISOString(),
+      });
     }
     toast.success(nextSaved ? "Conversation saved" : "Removed from saved");
   };
@@ -372,6 +546,9 @@ function ChatWorkspacePage() {
       onSelectSession={(id) => void loadSession(id)}
       activeSessionId={sessionId}
       onNewChat={startNewChat}
+      modelSettingsOpen={modelSettingsOpen}
+      onModelSettingsOpenChange={setModelSettingsOpen}
+      onModelSettingsSetupComplete={() => setModelSetupComplete(true)}
     >
       <div className="flex h-[calc(100vh-3rem)] flex-col">
         {/* Session Status Bar */}
@@ -436,6 +613,18 @@ function ChatWorkspacePage() {
         {/* Main Conversation Stream */}
         <Conversation className="flex-1">
           <ConversationContent className="mx-auto w-full max-w-5xl px-4 py-6">
+            {health && !health.schemaReady && (
+              <Alert>
+                <AlertCircle className="size-4" />
+                <AlertDescription className="text-xs">
+                  The Scout database schema is not ready. Confirm this app is connected to the
+                  intended Supabase project and ask Lovable to provision or repair the managed
+                  schema. Live search needs the existing event tables, search RPCs, and RLS
+                  policies.
+                  {health.schemaError ? ` ${health.schemaError}` : ""}
+                </AlertDescription>
+              </Alert>
+            )}
             {messages.length === 0 ? (
               <div className="mx-auto flex max-w-3xl flex-col items-center space-y-6 py-8 text-center">
                 <img
@@ -495,6 +684,14 @@ function ChatWorkspacePage() {
                           </AlertDescription>
                         </Alert>
                       )}
+                      {msg.runtimeNotice && (
+                        <Alert>
+                          <AlertCircle className="size-4" />
+                          <AlertDescription className="text-xs">
+                            {msg.runtimeNotice}
+                          </AlertDescription>
+                        </Alert>
+                      )}
 
                       <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
                         <Badge variant="outline" className="text-[10px]">
@@ -502,6 +699,11 @@ function ChatWorkspacePage() {
                             ? "Hybrid Semantic + Keyword"
                             : "Keyword + Metadata"}
                         </Badge>
+                        {msg.executionMode === "browser" && (
+                          <Badge variant="secondary" className="text-[10px]">
+                            Browser mode
+                          </Badge>
+                        )}
                         {msg.lowConfidence && (
                           <Badge variant="secondary" className="text-[10px]">
                             Low confidence — partial matches
@@ -514,7 +716,14 @@ function ChatWorkspacePage() {
                       </div>
 
                       <MessageContent className="w-full max-w-none text-sm leading-relaxed">
-                        <MessageResponse>{msg.content}</MessageResponse>
+                        {msg.content ? (
+                          <MessageResponse>{msg.content}</MessageResponse>
+                        ) : msg.streaming ? (
+                          <Shimmer className="text-sm">Thinking…</Shimmer>
+                        ) : null}
+                        {msg.streaming && msg.content && (
+                          <span className="ml-1 inline-block size-1.5 animate-pulse rounded-full bg-primary align-middle" />
+                        )}
                       </MessageContent>
 
                       {msg.uiSpec && (
@@ -657,18 +866,56 @@ function ChatWorkspacePage() {
                   </SelectContent>
                 </Select>
 
-                <Select value={model} onValueChange={setModel}>
-                  <SelectTrigger className="h-7 w-[145px] text-xs" aria-label="AI model">
+                <Select
+                  value={settings.chatMode}
+                  onValueChange={(value) =>
+                    updateModelSettings({ chatMode: value as typeof settings.chatMode })
+                  }
+                >
+                  <SelectTrigger className="h-7 w-[122px] text-xs" aria-label="Assistant mode">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {MODEL_OPTIONS.map((m) => (
+                    <SelectItem value="auto">Auto mode</SelectItem>
+                    <SelectItem value="search">Event search</SelectItem>
+                    <SelectItem value="chat">Assistant chat</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={model}
+                  onValueChange={(value) =>
+                    updateModelSettings(
+                      settings.provider === "openrouter"
+                        ? { openRouterModel: value }
+                        : { lovableModel: value },
+                    )
+                  }
+                >
+                  <SelectTrigger className="h-7 w-[155px] text-xs" aria-label="AI model">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {modelOptions.map((m) => (
                       <SelectItem key={m.id} value={m.id}>
                         {m.label}
                       </SelectItem>
                     ))}
+                    {settings.provider === "openrouter" && modelOptions.length === 0 && (
+                      <SelectItem value="openrouter/free">OpenRouter Free Router</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="size-7"
+                  aria-label="Change AI provider or model settings"
+                  onClick={() => setModelSettingsOpen(true)}
+                >
+                  <Settings2 className="size-3.5" />
+                </Button>
               </div>
 
               <div className="flex items-center gap-1.5">

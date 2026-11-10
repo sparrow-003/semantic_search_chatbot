@@ -31,10 +31,12 @@ export const Route = createFileRoute("/api/v1/events/$id")({
   server: {
     handlers: {
       PATCH: async ({ request, params }) => {
-        const { errorResponse, jsonResponse, readBoundedJson } =
-          await import("@/lib/server/rate-limit.server");
-        const { resolveAuthContext, isValidUuid, hasAdminCredentials, HttpError } =
-          await import("@/lib/server/supabase.server");
+        const { errorResponse, jsonResponse, readBoundedJson } = await import(
+          "@/lib/server/rate-limit.server"
+        );
+        const { resolveAuthContext, isValidUuid, hasAdminCredentials, HttpError } = await import(
+          "@/lib/server/supabase.server"
+        );
         const { indexEventsBatch } = await import("@/lib/server/indexing.server");
 
         try {
@@ -42,11 +44,7 @@ export const Route = createFileRoute("/api/v1/events/$id")({
           if (!isValidUuid(params.id)) throw new HttpError(400, "invalid_id", "Invalid event ID.");
           const parsed = patchEventSchema.safeParse(await readBoundedJson(request));
           if (!parsed.success) {
-            throw new HttpError(
-              400,
-              "invalid_request",
-              parsed.error.issues[0]?.message ?? "Invalid event update.",
-            );
+            throw new HttpError(400, "invalid_request", parsed.error.issues[0]?.message ?? "Invalid event update.");
           }
 
           const d = parsed.data;
@@ -93,8 +91,9 @@ export const Route = createFileRoute("/api/v1/events/$id")({
 
       DELETE: async ({ request, params }) => {
         const { errorResponse, jsonResponse } = await import("@/lib/server/rate-limit.server");
-        const { resolveAuthContext, isValidUuid, HttpError } =
-          await import("@/lib/server/supabase.server");
+        const { resolveAuthContext, isValidUuid, HttpError } = await import(
+          "@/lib/server/supabase.server"
+        );
         try {
           const auth = await resolveAuthContext(request, { required: true });
           if (!isValidUuid(params.id)) throw new HttpError(400, "invalid_id", "Invalid event ID.");

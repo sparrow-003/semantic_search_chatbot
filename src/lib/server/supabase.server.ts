@@ -40,17 +40,40 @@ function createScopedFetch(supabaseKey: string): typeof fetch {
   };
 }
 
+export function isMissingSchemaError(error: { code?: string | null; message?: string | null } | null | undefined): boolean {
+  if (!error) return false;
+  const code = error.code ?? "";
+  const msg = error.message ?? "";
+  return (
+    code === "PGRST205" ||
+    code === "PGRST202" ||
+    code === "42P01" ||
+    code === "42883" ||
+    /could not find the (table|function)/i.test(msg)
+  );
+}
+
+export function missingSchemaError(supabaseUrl?: string): HttpError {
+  const projectRef = supabaseUrl?.match(/https:\/\/([a-z0-9-]+)\.supabase\.co/i)?.[1];
+  const hint = projectRef
+    ? `Run drizzle/migrations/0000_workspace_core_schema.sql and drizzle/migrations/0001_seed_sample_events.sql in the Supabase SQL Editor (project ${projectRef}).`
+    : "Run drizzle/migrations/0000_workspace_core_schema.sql and drizzle/migrations/0001_seed_sample_events.sql in your Supabase SQL Editor.";
+  return new HttpError(503, "schema_not_initialized", `Supabase database schema is not initialized yet. ${hint}`);
+}
+
 export function getSupabasePublicConfig(): { url: string; publishableKey: string } {
   const url =
+    process.env["VITE_SUPABASE_URL"] ||
     process.env["SUPABASE_URL"] ||
     (import.meta.env?.["VITE_SUPABASE_URL"] as string | undefined) ||
     "";
   const publishableKey =
+    process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
     process.env["SUPABASE_PUBLISHABLE_KEY"] ||
     (import.meta.env?.["VITE_SUPABASE_PUBLISHABLE_KEY"] as string | undefined) ||
     "";
   if (!url || !publishableKey) {
-    throw new Error("Missing SUPABASE_URL or SUPABASE_PUBLISHABLE_KEY.");
+    throw new Error("Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY.");
   }
   return { url, publishableKey };
 }
@@ -97,8 +120,8 @@ export function extractBearerToken(request: Request): string | null {
 }
 
 /**
- * Resolve optional user auth context from Bearer JWT. Returns null for guests
- * (never throws on missing token); throws 401-coded error on malformed/expired JWT.
+ * Resolve optional user auth context from Bearer JWT or @supabase/ssr cookies.
+ * Returns null for guests (never throws on missing token); throws 401 on invalid JWT.
  */
 export async function resolveAuthContext(
   request: Request,
@@ -106,6 +129,27 @@ export async function resolveAuthContext(
 ): Promise<AuthContext | null> {
   const token = extractBearerToken(request);
   if (!token) {
+    // Fallback to @supabase/ssr cookie session when present
+    if (request.headers.get("cookie")) {
+      try {
+        const { createClient: createSsrClient } = await import("@/lib/server");
+        const { supabase } = createSsrClient(request);
+        const { data: claimsData } = await supabase.auth.getClaims();
+        const sub = claimsData?.claims?.sub;
+        if (sub) {
+          const emailClaim =
+            typeof claimsData.claims["email"] === "string" ? claimsData.claims["email"] : null;
+          return {
+            userId: sub,
+            email: emailClaim,
+            token: "",
+            client: supabase as unknown as AppSupabaseClient,
+          };
+        }
+      } catch {
+        // ignore cookie parse issues for guests
+      }
+    }
     if (options.required) {
       throw new HttpError(401, "unauthorized", "Authentication is required for this operation.");
     }

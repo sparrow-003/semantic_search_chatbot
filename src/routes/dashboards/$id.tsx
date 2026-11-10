@@ -41,9 +41,7 @@ function DashboardDetailPage() {
         query: config!.query,
         mode: config!.mode,
         filters: config!.filters,
-        workspaceId: user
-          ? (remoteDash?.dashboard.tenant_id ?? activeWorkspaceId)
-          : activeWorkspaceId,
+        workspaceId: user ? (remoteDash?.dashboard.tenant_id ?? activeWorkspaceId) : activeWorkspaceId,
         limit: 60,
       }),
   });
@@ -122,3 +120,4 @@ function DashboardDetailPage() {
     </AppShell>
   );
 }
+

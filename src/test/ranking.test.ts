@@ -67,16 +67,10 @@ describe("ranking and search explanations", () => {
 
   it("produces evidence-backed match explanations without fabricating fields", () => {
     const ev = makeCandidate();
-    const exp = explainMatch(
-      ev,
-      ["react", "streaming"],
-      ["React"],
-      {
-        ...EMPTY_FILTERS,
-        formats: ["online"],
-      },
-      0.78,
-    );
+    const exp = explainMatch(ev, ["react", "streaming"], ["React"], {
+      ...EMPTY_FILTERS,
+      formats: ["online"],
+    }, 0.78);
     expect(exp.matchedTechnologies).toContain("React");
     expect(exp.matchedTerms).toContain("streaming");
     expect(exp.summary).toContain("React");
@@ -125,3 +119,4 @@ describe("ranking and search explanations", () => {
     expect(doc).toContain("Technologies: React, Next.js, TypeScript");
   });
 });
+

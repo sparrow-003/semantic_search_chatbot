@@ -14,10 +14,8 @@ const ACCENT_CLASSES: Record<string, string> = {
 };
 
 function iconForId(id: string) {
-  if (id.includes("online"))
-    return <Globe2 className="size-4 text-emerald-600 dark:text-emerald-400" />;
-  if (id.includes("in_person"))
-    return <Users className="size-4 text-violet-600 dark:text-violet-400" />;
+  if (id.includes("online")) return <Globe2 className="size-4 text-emerald-600 dark:text-emerald-400" />;
+  if (id.includes("in_person")) return <Users className="size-4 text-violet-600 dark:text-violet-400" />;
   if (id.includes("free")) return <Ticket className="size-4 text-amber-600 dark:text-amber-400" />;
   if (id.includes("upcoming")) return <CalendarCheck2 className="size-4 text-primary" />;
   return <Sparkles className="size-4 text-primary" />;
@@ -35,7 +33,10 @@ export function KpiCardsBlock({ props }: { props: KpiProps }) {
         {props.metrics.map((m) => (
           <Card
             key={m.id}
-            className={cn("shadow-xs transition-colors", ACCENT_CLASSES[m.accent ?? "default"])}
+            className={cn(
+              "shadow-xs transition-colors",
+              ACCENT_CLASSES[m.accent ?? "default"],
+            )}
           >
             <CardContent className="p-4">
               <div className="flex items-center justify-between gap-2">
@@ -53,3 +54,4 @@ export function KpiCardsBlock({ props }: { props: KpiProps }) {
     </section>
   );
 }
+

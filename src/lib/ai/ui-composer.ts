@@ -67,62 +67,14 @@ export function buildDocumentedDiagram(
         diagramType: "er_diagram",
         groundedSource: "drizzle/migrations/0000_workspace_core_schema.sql",
         nodes: [
-          {
-            id: "tenants",
-            label: "tenants",
-            description: "Workspace boundary & owner",
-            kind: "storage",
-            layer: 0,
-          },
-          {
-            id: "tenant_members",
-            label: "tenant_members",
-            description: "RBAC roles: owner..viewer",
-            kind: "storage",
-            layer: 1,
-          },
-          {
-            id: "events",
-            label: "events",
-            description: "Events + search_tsv FTS + index_status",
-            kind: "storage",
-            layer: 1,
-          },
-          {
-            id: "event_embeddings",
-            label: "event_embeddings",
-            description: "pgvector(768) HNSW cosine index",
-            kind: "storage",
-            layer: 2,
-          },
-          {
-            id: "chat_sessions",
-            label: "chat_sessions",
-            description: "Per-user session metadata",
-            kind: "storage",
-            layer: 1,
-          },
-          {
-            id: "chat_messages",
-            label: "chat_messages",
-            description: "Messages + UI parts + Context JSONB",
-            kind: "storage",
-            layer: 2,
-          },
-          {
-            id: "saved_dashboards",
-            label: "saved_dashboards",
-            description: "Private or workspace-shared layouts",
-            kind: "storage",
-            layer: 1,
-          },
-          {
-            id: "audit_logs",
-            label: "audit_logs",
-            description: "Append-only security audit trail",
-            kind: "service",
-            layer: 2,
-          },
+          { id: "tenants", label: "tenants", description: "Workspace boundary & owner", kind: "storage", layer: 0 },
+          { id: "tenant_members", label: "tenant_members", description: "RBAC roles: owner..viewer", kind: "storage", layer: 1 },
+          { id: "events", label: "events", description: "Events + search_tsv FTS + index_status", kind: "storage", layer: 1 },
+          { id: "event_embeddings", label: "event_embeddings", description: "pgvector(768) HNSW cosine index", kind: "storage", layer: 2 },
+          { id: "chat_sessions", label: "chat_sessions", description: "Per-user session metadata", kind: "storage", layer: 1 },
+          { id: "chat_messages", label: "chat_messages", description: "Messages + UI parts + Context JSONB", kind: "storage", layer: 2 },
+          { id: "saved_dashboards", label: "saved_dashboards", description: "Private or workspace-shared layouts", kind: "storage", layer: 1 },
+          { id: "audit_logs", label: "audit_logs", description: "Append-only security audit trail", kind: "service", layer: 2 },
         ],
         edges: [
           { id: "e1", source: "tenants", target: "tenant_members", label: "1:N membership" },
@@ -165,40 +117,13 @@ export function buildDocumentedDiagram(
           { id: "validator", label: "Zod UI Validator", kind: "decision", layer: 4 },
         ],
         edges: [
-          {
-            id: "s1",
-            source: "user",
-            target: "api",
-            label: "1. Query + Bearer JWT",
-            animated: true,
-          },
-          {
-            id: "s2",
-            source: "api",
-            target: "orchestrator",
-            label: "2. Sanitized request + Tenant check",
-          },
-          {
-            id: "s3",
-            source: "orchestrator",
-            target: "llm",
-            label: "3. Intent + 768d query vector",
-          },
+          { id: "s1", source: "user", target: "api", label: "1. Query + Bearer JWT", animated: true },
+          { id: "s2", source: "api", target: "orchestrator", label: "2. Sanitized request + Tenant check" },
+          { id: "s3", source: "orchestrator", target: "llm", label: "3. Intent + 768d query vector" },
           { id: "s4", source: "orchestrator", target: "db", label: "4. search_events RPC (RLS)" },
           { id: "s5", source: "db", target: "orchestrator", label: "5. Authorized candidate rows" },
-          {
-            id: "s6",
-            source: "orchestrator",
-            target: "validator",
-            label: "6. Validate UIResponse schema",
-          },
-          {
-            id: "s7",
-            source: "validator",
-            target: "user",
-            label: "7. Stream grounded UI",
-            animated: true,
-          },
+          { id: "s6", source: "orchestrator", target: "validator", label: "6. Validate UIResponse schema" },
+          { id: "s7", source: "validator", target: "user", label: "7. Stream grounded UI", animated: true },
         ],
         mermaidCode: [
           "sequenceDiagram",
@@ -226,77 +151,22 @@ export function buildDocumentedDiagram(
       type: "diagram",
       props: {
         title: "Scout Semantic Search & Dynamic AI Workspace Architecture",
-        subtitle:
-          "Layered TanStack Start, API Gateway, AI Orchestration, and PostgreSQL + pgvector",
+        subtitle: "Layered TanStack Start, API Gateway, AI Orchestration, and PostgreSQL + pgvector",
         diagramType: "architecture",
         groundedSource: "PRD Section 12 — Technical Architecture & TanStack Start Runtime",
         assumptions: [
           "Semantic vectors require LOVABLE_API_KEY and indexed event_embeddings; keyword + metadata filters remain active as fallback.",
         ],
         nodes: [
-          {
-            id: "ui",
-            label: "Workspace UI & Component Registry",
-            description: "React + Tailwind + Recharts + React Flow",
-            kind: "input",
-            layer: 0,
-          },
-          {
-            id: "api",
-            label: "TanStack Start API Routes (/api/v1/*)",
-            description: "Zod input validation & rate limits",
-            kind: "service",
-            layer: 1,
-          },
-          {
-            id: "auth",
-            label: "Auth & Tenant Guard",
-            description: "Supabase JWT + RBAC + RLS",
-            kind: "decision",
-            layer: 1,
-          },
-          {
-            id: "orch",
-            label: "AI Orchestrator",
-            description: "Intent router, context & prompt guard",
-            kind: "process",
-            layer: 2,
-          },
-          {
-            id: "search",
-            label: "Hybrid Search & Ranking",
-            description: "0.50 Semantic + 0.30 FTS + 0.20 Metadata",
-            kind: "process",
-            layer: 3,
-          },
-          {
-            id: "analytics",
-            label: "Deterministic Analytics Engine",
-            description: "KPIs & groupCount over authorized rows",
-            kind: "process",
-            layer: 3,
-          },
-          {
-            id: "uiengine",
-            label: "UI Composer & Validator",
-            description: "Strict Zod allowlist, no arbitrary HTML/JS",
-            kind: "output",
-            layer: 3,
-          },
-          {
-            id: "pg",
-            label: "PostgreSQL + pgvector + RLS",
-            description: "events, event_embeddings, chat_sessions, dashboards",
-            kind: "storage",
-            layer: 4,
-          },
-          {
-            id: "gw",
-            label: "Lovable AI Gateway",
-            description: "Gemini / OpenAI chat & gemini-embedding-001",
-            kind: "service",
-            layer: 4,
-          },
+          { id: "ui", label: "Workspace UI & Component Registry", description: "React + Tailwind + Recharts + React Flow", kind: "input", layer: 0 },
+          { id: "api", label: "TanStack Start API Routes (/api/v1/*)", description: "Zod input validation & rate limits", kind: "service", layer: 1 },
+          { id: "auth", label: "Auth & Tenant Guard", description: "Supabase JWT + RBAC + RLS", kind: "decision", layer: 1 },
+          { id: "orch", label: "AI Orchestrator", description: "Intent router, context & prompt guard", kind: "process", layer: 2 },
+          { id: "search", label: "Hybrid Search & Ranking", description: "0.50 Semantic + 0.30 FTS + 0.20 Metadata", kind: "process", layer: 3 },
+          { id: "analytics", label: "Deterministic Analytics Engine", description: "KPIs & groupCount over authorized rows", kind: "process", layer: 3 },
+          { id: "uiengine", label: "UI Composer & Validator", description: "Strict Zod allowlist, no arbitrary HTML/JS", kind: "output", layer: 3 },
+          { id: "pg", label: "PostgreSQL + pgvector + RLS", description: "events, event_embeddings, chat_sessions, dashboards", kind: "storage", layer: 4 },
+          { id: "gw", label: "Lovable AI Gateway", description: "Gemini / OpenAI chat & gemini-embedding-001", kind: "service", layer: 4 },
         ],
         edges: [
           { id: "a1", source: "ui", target: "api", label: "HTTPS / SSE", animated: true },
@@ -307,13 +177,7 @@ export function buildDocumentedDiagram(
           { id: "a6", source: "orch", target: "uiengine", label: "Compose UI" },
           { id: "a7", source: "search", target: "pg", label: "HNSW + GIN FTS" },
           { id: "a8", source: "orch", target: "gw", label: "Structured LLM + Embeddings" },
-          {
-            id: "a9",
-            source: "uiengine",
-            target: "ui",
-            label: "Validated JSON spec",
-            animated: true,
-          },
+          { id: "a9", source: "uiengine", target: "ui", label: "Validated JSON spec", animated: true },
         ],
         mermaidCode: [
           "flowchart TD",
@@ -325,7 +189,7 @@ export function buildDocumentedDiagram(
           '  ORCH --> UIENG["UI Composer & Zod Validator"]',
           '  SEARCH --> PG["PostgreSQL + pgvector + RLS"]',
           '  ORCH --> GW["Lovable AI Gateway (LLM + Embeddings)"]',
-          "  UIENG -->|Validated JSON Spec| UI",
+          '  UIENG -->|Validated JSON Spec| UI',
         ].join("\n"),
       },
     };
@@ -389,62 +253,14 @@ export function buildDocumentedDiagram(
       diagramType: diagramType === "process" ? "process" : "flowchart",
       groundedSource: "PRD Section 7.5 — Hybrid Retrieval Pipeline",
       nodes: [
-        {
-          id: "q",
-          label: "User Query",
-          description: "Natural language + conversation context",
-          kind: "input",
-          layer: 0,
-        },
-        {
-          id: "val",
-          label: "Query Validation & Prompt Guard",
-          description: "Sanitize length and detect injection",
-          kind: "decision",
-          layer: 1,
-        },
-        {
-          id: "intent",
-          label: "Intent & Constraint Extraction",
-          description: "Extract topics, format, dates, city",
-          kind: "process",
-          layer: 2,
-        },
-        {
-          id: "vec",
-          label: "Vector Search (pgvector 768d)",
-          description: "Cosine similarity over event_embeddings",
-          kind: "storage",
-          layer: 3,
-        },
-        {
-          id: "kw",
-          label: "Full-Text Keyword Search",
-          description: "Weighted GIN tsvector ranking",
-          kind: "storage",
-          layer: 3,
-        },
-        {
-          id: "meta",
-          label: "Strict Metadata Filtering",
-          description: "Enforce tenant RLS, dates, format, category",
-          kind: "decision",
-          layer: 4,
-        },
-        {
-          id: "rank",
-          label: "Configurable Hybrid Ranking",
-          description: "0.50 Semantic + 0.30 Keyword + 0.20 Metadata",
-          kind: "process",
-          layer: 5,
-        },
-        {
-          id: "out",
-          label: "Grounded Explanations & UI",
-          description: "Cite verified records & validated specs",
-          kind: "output",
-          layer: 6,
-        },
+        { id: "q", label: "User Query", description: "Natural language + conversation context", kind: "input", layer: 0 },
+        { id: "val", label: "Query Validation & Prompt Guard", description: "Sanitize length and detect injection", kind: "decision", layer: 1 },
+        { id: "intent", label: "Intent & Constraint Extraction", description: "Extract topics, format, dates, city", kind: "process", layer: 2 },
+        { id: "vec", label: "Vector Search (pgvector 768d)", description: "Cosine similarity over event_embeddings", kind: "storage", layer: 3 },
+        { id: "kw", label: "Full-Text Keyword Search", description: "Weighted GIN tsvector ranking", kind: "storage", layer: 3 },
+        { id: "meta", label: "Strict Metadata Filtering", description: "Enforce tenant RLS, dates, format, category", kind: "decision", layer: 4 },
+        { id: "rank", label: "Configurable Hybrid Ranking", description: "0.50 Semantic + 0.30 Keyword + 0.20 Metadata", kind: "process", layer: 5 },
+        { id: "out", label: "Grounded Explanations & UI", description: "Cite verified records & validated specs", kind: "output", layer: 6 },
       ],
       edges: [
         { id: "f1", source: "q", target: "val", animated: true },
@@ -463,7 +279,7 @@ export function buildDocumentedDiagram(
         '  INT -->|Query Embedding| VEC["Vector Search (pgvector 768d)"]',
         '  INT -->|Safe OR-tsquery| KW["Keyword Search (search_tsv)"]',
         '  VEC --> META["Strict Metadata & Tenant Filtering"]',
-        "  KW --> META",
+        '  KW --> META',
         '  META --> RANK["Hybrid Ranking (0.50 Sem + 0.30 KW + 0.20 Meta)"]',
         '  RANK --> OUT["Grounded Answer, Explanations & Validated UI"]',
       ].join("\n"),
@@ -484,8 +300,7 @@ export function buildFilterFormComponent(
     type: "dynamic_form",
     props: {
       title: "Interactive Event Filter & Search Builder",
-      description:
-        "Refine your search using validated facets from your authorized event workspace.",
+      description: "Refine your search using validated facets from your authorized event workspace.",
       action: "filter_search",
       submitLabel: "Search Matching Events",
       multiStep: false,
@@ -529,10 +344,7 @@ export function buildFilterFormComponent(
           label: "City",
           type: "searchable_select",
           defaultValue: currentFilters.city ?? "__any__",
-          options: [
-            { label: "Any city", value: "__any__" },
-            ...facets.cities.map((c) => ({ label: c, value: c })),
-          ],
+          options: [{ label: "Any city", value: "__any__" }, ...facets.cities.map((c) => ({ label: c, value: c }))],
           dependsOn: { field: "formats", operator: "not_equals", value: "online" },
         },
         {
@@ -558,10 +370,7 @@ export function buildFilterFormComponent(
   };
 }
 
-function makeKpiComponent(
-  events: RankedEvent[],
-  title?: string,
-): Extract<UIComponent, { type: "kpi_cards" }> {
+function makeKpiComponent(events: RankedEvent[], title?: string): Extract<UIComponent, { type: "kpi_cards" }> {
   const kpis = computeKpis(events);
   return {
     id: "kpi_summary",
@@ -650,9 +459,7 @@ export function composeUIResponse(input: ComposeUIInput): UIResponse {
   const { query, parsed, events, facets, prevTableConfig, now = new Date() } = input;
   const safeEvents = events.map(toSafeEventItem);
   const filterDesc = describeFilters(parsed.filters);
-  const subtitle = filterDesc.length
-    ? `Filters: ${filterDesc.join(" · ")}`
-    : `${safeEvents.length} authorized event${safeEvents.length === 1 ? "" : "s"}`;
+  const subtitle = filterDesc.length ? `Filters: ${filterDesc.join(" · ")}` : `${safeEvents.length} authorized event${safeEvents.length === 1 ? "" : "s"}`;
   const components: UIComponent[] = [];
 
   if (parsed.intent === "generate_diagram") {
@@ -684,16 +491,14 @@ export function composeUIResponse(input: ComposeUIInput): UIResponse {
       type: "ui_response",
       version: "1.0",
       title: "No Matching Events Found",
-      subtitle: filterDesc.length
-        ? `Active filters: ${filterDesc.join(" · ")}`
-        : "Adjust filters or try broader search terms",
+      subtitle: filterDesc.length ? `Active filters: ${filterDesc.join(" · ")}` : "Adjust filters or try broader search terms",
       components,
     });
   }
 
   const resolvedTableConfig = parsed.tableCommand
     ? applyTableCommand(prevTableConfig ?? DEFAULT_TABLE_CONFIG, parsed.tableCommand)
-    : (prevTableConfig ?? DEFAULT_TABLE_CONFIG);
+    : prevTableConfig ?? DEFAULT_TABLE_CONFIG;
 
   switch (parsed.intent) {
     case "build_dashboard": {
@@ -707,20 +512,8 @@ export function composeUIResponse(input: ComposeUIInput): UIResponse {
         filters: parsed.filters,
         refreshedAt: now.toISOString(),
         widgets: [
-          {
-            id: "w_kpi_total",
-            kind: "metric",
-            title: "Matching Events",
-            colSpan: 4,
-            metricKey: "total",
-          },
-          {
-            id: "w_kpi_online",
-            kind: "metric",
-            title: "Online Events",
-            colSpan: 4,
-            metricKey: "online",
-          },
+          { id: "w_kpi_total", kind: "metric", title: "Matching Events", colSpan: 4, metricKey: "total" },
+          { id: "w_kpi_online", kind: "metric", title: "Online Events", colSpan: 4, metricKey: "online" },
           { id: "w_kpi_free", kind: "metric", title: "Free Events", colSpan: 4, metricKey: "free" },
           {
             id: "w_chart_cat",
@@ -802,9 +595,7 @@ export function composeUIResponse(input: ComposeUIInput): UIResponse {
         },
       });
       if (parsed.requestedChartType) {
-        components.push(
-          makeChartComponent(events, parsed.requestedChartType, parsed.requestedDimension),
-        );
+        components.push(makeChartComponent(events, parsed.requestedChartType, parsed.requestedDimension));
       }
       break;
     }
@@ -868,12 +659,7 @@ export function composeUIResponse(input: ComposeUIInput): UIResponse {
         props: {
           title: "Events Board",
           subtitle,
-          groupBy:
-            parsed.requestedDimension === "format"
-              ? "format"
-              : parsed.requestedDimension === "month"
-                ? "month"
-                : "category",
+          groupBy: parsed.requestedDimension === "format" ? "format" : parsed.requestedDimension === "month" ? "month" : "category",
           events: safeEvents,
         },
       });
@@ -911,9 +697,7 @@ export function composeUIResponse(input: ComposeUIInput): UIResponse {
         highlights.push(`Top category: ${topCats[0].label} (${topCats[0].value} events).`);
       }
       if (topTech[0]) {
-        highlights.push(
-          `Most represented technology: ${topTech[0].label} (${topTech[0].value} events).`,
-        );
+        highlights.push(`Most represented technology: ${topTech[0].label} (${topTech[0].value} events).`);
       }
       components.push(makeKpiComponent(events));
       components.push({
@@ -980,9 +764,7 @@ export function composeUIResponse(input: ComposeUIInput): UIResponse {
   return validateAndUnwrap({
     type: "ui_response",
     version: "1.0",
-    title: parsed.topics.length
-      ? `${parsed.topics.join(" & ")} Events Workspace`
-      : "Semantic Search Results",
+    title: parsed.topics.length ? `${parsed.topics.join(" & ")} Events Workspace` : "Semantic Search Results",
     subtitle,
     components,
   });
@@ -1036,9 +818,7 @@ export function buildDeterministicGroundedSummary(
     lines.push(`- **${e.title}** (${date} · ${e.category} · ${loc}) — ${e.explanation.summary}`);
   }
   if (events.length > 3) {
-    lines.push(
-      `\nShowing all **${events.length}** verified records in the interactive view below.`,
-    );
+    lines.push(`\nShowing all **${events.length}** verified records in the interactive view below.`);
   }
   return lines.join("\n");
 }

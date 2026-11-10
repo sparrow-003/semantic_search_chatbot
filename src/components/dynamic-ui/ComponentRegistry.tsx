@@ -20,7 +20,9 @@ import {
   TimelineBlock,
 } from "./TimelineKanbanChecklistReport";
 
-const LazyChartBlock = lazy(() => import("./ChartBlock").then((m) => ({ default: m.ChartBlock })));
+const LazyChartBlock = lazy(() =>
+  import("./ChartBlock").then((m) => ({ default: m.ChartBlock })),
+);
 const LazyDiagramBlock = lazy(() =>
   import("./DiagramBlock").then((m) => ({ default: m.DiagramBlock })),
 );
@@ -106,7 +108,10 @@ export function RenderSingleUIComponent({
       );
     case "dynamic_form":
       return (
-        <DynamicFormBlock props={component.props} {...(onFormSubmit ? { onFormSubmit } : {})} />
+        <DynamicFormBlock
+          props={component.props}
+          {...(onFormSubmit ? { onFormSubmit } : {})}
+        />
       );
     case "dashboard":
       return <DashboardBlock props={component.props} />;

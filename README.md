@@ -1,130 +1,283 @@
-# Scout — Intelligent Semantic Search & Dynamic AI Workspace
+# Scout
 
-**Semantic Search Chatbot — Intelligent Workspace Edition**
+**A multi-tenant event discovery and AI workspace for searching live data, exploring results, and building shareable reports.**
 
-Scout is a modular, API-first, multi-tenant-ready intelligent AI workspace built with **TanStack Start**, **React 19**, **Tailwind CSS v4**, **Supabase (PostgreSQL + pgvector + Row-Level Security)**, and the **Lovable AI Gateway**.
+Scout combines natural-language search, PostgreSQL full-text and vector retrieval, workspace-scoped event data, conversational AI, and validated interactive result views. Search results come from Supabase. The language model can explain or arrange those results, but it does not create database records or execute generated SQL.
 
-Unlike traditional text-only chatbots, Scout understands natural-language requests, executes hybrid semantic + full-text + metadata retrieval over authorized event records, generates grounded explanations, and dynamically composes **schema-validated interactive UI components** (cards, sortable/grouped tables, comparison matrices, 9 chart types, interactive React Flow + Mermaid diagrams, validated dynamic forms, live dashboards, timelines, kanban boards, checklists, and exportable reports).
+## Contents
 
----
+- [What Scout does](#what-scout-does)
+- [Runtime modes and fallback behavior](#runtime-modes-and-fallback-behavior)
+- [Architecture](#architecture)
+- [Supabase and live data](#supabase-and-live-data)
+- [AI providers and OpenRouter keys](#ai-providers-and-openrouter-keys)
+- [Local development](#local-development)
+- [Environment configuration](#environment-configuration)
+- [HTTP API](#http-api)
+- [Security and access control](#security-and-access-control)
+- [Deployment and operations](#deployment-and-operations)
+- [Troubleshooting](#troubleshooting)
+- [Repository conventions](#repository-conventions)
 
-## Key Capabilities
+## What Scout does
 
-### 1. Intelligent Chat Workspace (`/`)
-- Streaming SSE conversational interface with stage indicators (`Understanding your question` → `Searching relevant records` → `Validating generated interface`).
-- Explicit `ConversationContext` state retention for multi-turn follow-ups (*"Show only online events"*, *"Now compare them by date"*, *"Create a chart"*, *"Hide the description column"*).
-- Configurable search mode (`hybrid`, `semantic`, `keyword`) and AI model selector.
-- Saved & searchable session history (persisted in Supabase `chat_sessions` / `chat_messages` when signed in, with guest `localStorage` continuity).
-- Follow-up suggestion pills, response regeneration, stop generation, and search quality feedback (`useful`, `irrelevant`, `incorrect_info`).
+| Area           | Route         | Capabilities                                                                                                                          |
+| -------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Chat workspace | `/`           | Streaming answers, follow-up context, live event search, saved conversations, model selection, stop/regenerate, and response feedback |
+| Search         | `/search`     | Search and filter events by text, category, format, technology, date, city, and free/paid status                                      |
+| Dashboards     | `/dashboards` | Save, reopen, duplicate, refresh, and export workspace dashboards                                                                     |
+| Team workspace | `/workspace`  | View workspace membership and roles, manage workspace events, and review audit activity                                               |
+| Authentication | `/auth`       | Supabase sign-in, account creation, and password reset                                                                                |
+| Profile        | `/profile`    | Update profile information and account preferences                                                                                    |
+| Administration | `/admin`      | Inspect service health, search/index coverage, and operational metrics                                                                |
 
-### 2. Hybrid Semantic Search Engine (`/search`)
-- **Vector similarity** (`pgvector` HNSW cosine index over 768-dim `google/gemini-embedding-001` vectors in `event_embeddings`).
-- **Full-text keyword search** (PostgreSQL weighted `tsvector` GIN index `search_tsv` with safe sanitized OR-tsquery generation).
-- **Strict metadata filtering** (`format`, `category`, `technologies`, `dateStart..dateEnd`, `city`, `is_free`) verified server-side and post-filtered so semantic similarity never overrides hard constraints.
-- **Configurable ranking** (`0.50 Semantic + 0.30 Keyword + 0.20 Metadata` in hybrid mode) with transparent score breakdowns and evidence-backed match explanations.
-- Honest fallback when vector embeddings or provider keys are unavailable — switches cleanly to keyword + metadata retrieval without fabricating semantic scores.
+Chat can render event cards, KPI summaries, sortable data tables, comparison tables, charts, diagrams, filter forms, dashboards, timelines, kanban boards, checklists, and reports. The UI is selected from an allowlisted component registry and validated against the app's schema before it is rendered.
 
-### 3. Controlled Dynamic UI Generation Engine (`src/lib/ui/`)
-All AI-selected UI components come from an allowlisted frontend registry (`src/components/dynamic-ui/ComponentRegistry.tsx`) and are strictly validated via Zod (`validateUISpec`) before rendering. **Zero arbitrary JavaScript, `eval`, or raw AI-generated HTML is ever executed.**
-- **Event Cards & KPI Strips** (`event_cards`, `kpi_cards`)
-- **Interactive Data Tables & Comparison Matrices** (`data_table`, `comparison_table`) — sorting, pagination, global search, column visibility/resizing, grouping (`category`, `format`, `month`), row selection, CSV/JSON export, and natural-language table commands.
-- **9 Chart Types via Recharts** (`bar`, `horizontal_bar`, `stacked_bar`, `line`, `area`, `pie`, `donut`, `scatter`, `kpi`) with accessible screen-reader data tables and CSV export.
-- **Interactive Diagrams via React Flow & Strict Mermaid** (`flowchart`, `architecture`, `process`, `sequence`, `er_diagram`, `mind_map`, `decision_tree`, `user_journey`, `state`) with zoom, pan, minimap, node inspector, SVG/PNG export, and Mermaid directive sanitization.
-- **Dynamic Forms via React Hook Form + Zod** (`dynamic_form`) — conditional field visibility, multi-step support, live facets, and strictly allowlisted actions (`filter_search`, etc.).
-- **Composite Interactive Dashboards** (`dashboard`), **Timelines** (`timeline`), **Kanban Boards** (`kanban`), **Checklists** (`checklist`), and **Exportable Reports** (`report_summary`).
+Search modes expose different ranking behavior:
 
-### 4. Saved Dashboards & Templates (`/dashboards`, `/dashboards/$id`)
-- Reusable report templates, private & workspace-shared dashboards (`saved_dashboards`), live interactive filter bars, widget reordering/resizing/adding, authorized data refresh, duplication, and CSV/JSON/Markdown export.
+- **Hybrid** combines vector similarity, PostgreSQL full-text relevance, and metadata matches when embeddings are available.
+- **Keyword** uses full-text relevance and metadata.
+- **Semantic** prioritizes vector similarity when the server can generate or use embeddings.
 
-### 5. Multi-Tenant Workspaces, Auth, & Observability (`/workspace`, `/admin`, `/auth`, `/profile`)
-- **Authentication**: Email/password sign-in/up, Google & Lovable OAuth, password reset, profile editing, and private `avatars` storage bucket uploads.
-- **Multi-Tenant RBAC & RLS**: `owner`, `admin`, `editor`, `member`, `viewer` roles enforced by PostgreSQL Row-Level Security (`is_tenant_member`, `has_tenant_role`) and server-side guards.
-- **Workspace Event Studio**: Editors can publish/manage private workspace events with automatic SHA-256 deduplicated embedding indexing.
-- **Observability & Index Health**: Search latency (p95), success/low-confidence/no-result rates, token & cost tracking, UI schema validation rate, rate-limit/security flags, and embedding index management.
+Hard filters such as workspace, date, event format, category, city, and technology are applied independently of ranking so a similarity score cannot override them.
 
----
+## Runtime modes and fallback behavior
 
-## Architecture & Security Model
+The app has a server-backed path and a browser path. The browser path is intended to keep the chat usable when the Scout API server is unavailable; it still needs a browser to load the app and a network connection to reach external services.
 
-- **Prompt-Injection Defense** (`src/lib/ai/security.ts`): Retrieved event records are wrapped in untrusted `<retrieved_records data_only="true">` delimiters; suspicious override attempts are flagged and never alter permissions.
-- **No LLM-Generated SQL**: All search and analytics operations invoke parameterized PostgreSQL RPCs (`search_events`, `get_events_by_ids`, `event_facets`) and deterministic TypeScript aggregation (`computeKpis`, `groupCount`).
-- **Dynamic UI Security** (`src/lib/ui/validator.ts`): Strict Zod `.strict()` schema rejection of unknown keys/components, bounded component count (max 8) & payload size, `https://`-only URL validation, and Mermaid script/callback stripping.
-- **Server-Only Secrets**: `LOVABLE_API_KEY` and `SUPABASE_SERVICE_ROLE_KEY` are loaded strictly inside `*.server.ts` modules dynamically imported inside API handlers, never shipped to client bundles.
+| Capability                           | Scout API server available                                   | Scout API server unavailable                                                                                                         |
+| ------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Live public and workspace event data | Server API backed by Supabase                                | Browser queries Supabase directly using the signed-in user's session and database policies                                           |
+| Search ranking                       | Hybrid vector, keyword, and metadata ranking when configured | Keyword and metadata ranking; browser mode does not generate vector embeddings                                                       |
+| AI response                          | Configured Lovable AI Gateway, or the user's OpenRouter key  | User's OpenRouter key can call OpenRouter directly; otherwise Scout uses deterministic responses and grounded summaries              |
+| Chat persistence                     | Supabase for signed-in users; browser storage for guests     | Direct Supabase persistence for signed-in users when permitted; local browser storage is used when persistence is unavailable        |
+| Workspace event writes               | Server route can also queue embedding indexing               | Browser can write permitted rows through Supabase RLS; semantic indexing waits until the server and embedding provider are available |
+| Email invitations                    | Supported by the workspace API                               | Requires the Scout API server; direct browser membership changes need the invitee's user UUID                                        |
 
----
+The chat shows a runtime notice when it has switched to browser mode or cannot reach Supabase. If Supabase is unavailable, Scout does not claim that live events were searched. Guest conversation history is local to that browser and is not shared across devices.
 
-## REST API Reference (`/api/v1/*`)
+OpenRouter's direct browser requests depend on the user's browser/network allowing cross-origin requests. If that path is blocked, run Scout with the API server so it can proxy the request, or use the configured built-in provider. OpenRouter rate limits and free-model availability are controlled by OpenRouter.
 
-| Endpoint | Method(s) | Purpose |
-| --- | --- | --- |
-| `/api/v1/health` | `GET` | Runtime & provider configuration check |
-| `/api/v1/chat` | `POST` | AI orchestration & SSE streaming chat workspace |
-| `/api/v1/chat/sessions` | `GET`, `POST` | List, search, and create saved conversations |
-| `/api/v1/chat/sessions/:id` | `GET`, `PATCH`, `DELETE` | Fetch, rename/save, or delete a conversation |
-| `/api/v1/chat/sessions/:id/messages` | `GET` | Retrieve persisted session messages & UI specs |
-| `/api/v1/search/hybrid` | `POST` | Hybrid semantic + FTS + metadata search |
-| `/api/v1/search/semantic` | `POST` | Semantic vector-focused search |
-| `/api/v1/search/facets` | `GET` | Authorized categories, cities, technologies & counts |
-| `/api/v1/search/history` | `GET` | Recent query history |
-| `/api/v1/search/feedback` | `POST` | Record search quality ratings & comments |
-| `/api/v1/embeddings/status` | `GET` | Embedding coverage & index status |
-| `/api/v1/embeddings/generate` | `POST` | Index pending events (editor/platform_admin) |
-| `/api/v1/embeddings/reindex` | `POST` | Force reindex events (editor/platform_admin) |
-| `/api/v1/ui/generate` | `POST` | Generate validated dynamic UI specification |
-| `/api/v1/ui/validate` | `POST` | Validate a UI specification against strict schema |
-| `/api/v1/ui/artifacts/:id` | `GET`, `PATCH` | Fetch or update validated UI artifact |
-| `/api/v1/dashboards` | `GET`, `POST` | List or save workspace dashboards |
-| `/api/v1/dashboards/:id` | `GET`, `PATCH`, `DELETE` | View, update, or delete dashboard |
-| `/api/v1/dashboards/:id/duplicate` | `POST` | Duplicate a dashboard |
-| `/api/v1/dashboards/:id/export` | `POST` | Export dashboard records (JSON, CSV, Markdown) |
-| `/api/v1/analytics/query` | `POST` | Multi-dimension authorized event analytics |
-| `/api/v1/analytics/aggregate` | `POST` | Custom dimension aggregations & KPIs |
-| `/api/v1/analytics/metrics` | `GET` | Operational & search observability metrics |
-| `/api/v1/events` | `GET`, `POST` | List public/workspace events or create event |
-| `/api/v1/events/:id` | `PATCH`, `DELETE` | Update or delete workspace event |
-| `/api/v1/workspaces` | `GET`, `POST` | List or create team workspaces |
-| `/api/v1/workspaces/:id/members` | `GET`, `POST`, `PATCH`, `DELETE` | Manage workspace members & RBAC roles |
-| `/api/v1/workspaces/:id/audit` | `GET` | View workspace audit logs (admin/owner) |
+## Architecture
 
----
-
-## Local Setup & Development
-
-### 1. Prerequisites
-- **Node.js >= 22** or **Bun >= 1.2**
-- A Supabase project with the SQL migrations in `drizzle/migrations/` applied (including `0000_workspace_core_schema.sql` and `0001_seed_sample_events.sql` for the 48 sample events).
-
-### 2. Environment Variables
-Copy `.env.example` to `.env` and fill in your values (never commit real secrets):
-
-```sh
-cp .env.example .env
+```mermaid
+flowchart LR
+  U[Browser user] --> A[Scout UI<br/>TanStack Start + React]
+  A -->|same-origin API| S[Scout server routes]
+  A -->|fallback with user's session| DB[(Supabase<br/>Postgres + RLS)]
+  S --> DB
+  S -->|built-in provider| L[Lovable AI Gateway]
+  A -->|optional direct BYOK| O[OpenRouter]
+  S -->|optional forwarded BYOK| O
+  DB --> RPC[Search RPCs<br/>events + facets + IDs]
+  RPC --> A
 ```
 
-- `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`: Public Supabase project config.
-- `SUPABASE_SERVICE_ROLE_KEY`: Server-only key required for writing `event_embeddings` and persistent `search_queries` telemetry.
-- `LOVABLE_API_KEY`: Server-only AI Gateway key for Gemini/OpenAI chat completions and `google/gemini-embedding-001` vector embeddings. (When omitted locally, Scout operates cleanly using deterministic NLP parsing and PostgreSQL FTS + metadata search.)
+### Main code areas
 
-### 3. Install, Test, Typecheck, and Run
+| Path                         | Responsibility                                                                             |
+| ---------------------------- | ------------------------------------------------------------------------------------------ |
+| `src/routes/`                | Page routes and same-origin HTTP API handlers                                              |
+| `src/components/`            | Application shell, chat controls, dialogs, and reusable UI                                 |
+| `src/components/dynamic-ui/` | Allowlisted renderers for generated result views                                           |
+| `src/lib/client/`            | Browser API client, browser chat fallback, workspace state, and local preferences          |
+| `src/lib/server/`            | Server-only search, orchestration, provider, authorization, indexing, and rate-limit logic |
+| `src/lib/ai/`                | Intent parsing, conversation helpers, prompt safety, and response composition              |
+| `src/lib/events/`            | Event types, filters, and ranking logic shared by search paths                             |
+| `src/lib/ui/`                | Dynamic UI schemas and validation                                                          |
+| `src/integrations/supabase/` | Supabase client configuration and generated database types                                 |
+
+The app uses TanStack Start file-based routing, React 19, TypeScript, Tailwind CSS, and Vite. The repository's Vite configuration uses the Lovable TanStack config, which supplies the TanStack Start and Nitro integration and a Cloudflare-oriented production build by default.
+
+## Supabase and live data
+
+Supabase is the source of truth for users, workspaces, events, chat history, saved dashboards, feedback, and audit data. The app expects the connected project to expose the schema and row-level security policies that match the generated types in `src/integrations/supabase/types.ts`.
+
+Search uses these existing database RPCs:
+
+- `event_facets(workspace_id)` returns the visible event counts and filter values.
+- `search_events(...)` returns events matching the caller's workspace scope, filters, and search terms.
+- `get_events_by_ids(event_ids, workspace_id)` reloads previously surfaced results for follow-up turns.
+
+The client uses the Supabase publishable key. That key is designed to be public; database policies must enforce access. A server-only service-role key is used for privileged indexing and server operations where configured. Never put it in a `VITE_*` variable.
+
+### Workspace and event data
+
+Workspace records are scoped through `tenants` and `tenant_members`. Event rows may be public or belong to a workspace. Workspace member roles are `owner`, `admin`, `editor`, `member`, and `viewer`; the database policies and server handlers enforce the permissions for each operation.
+
+When the server is available, creating or updating an event can also queue vector indexing. A direct browser write can still save the permitted event row, but it cannot perform privileged embedding work. The workspace UI reports that indexing is pending until the server path is available.
+
+### Lovable-managed database schema
+
+This repository is connected to Lovable. Database schema and policy changes are managed through Lovable. Do not edit or apply files under `supabase/migrations/` or `drizzle/` by hand. For a schema change, make the change in Lovable and then update the app's generated types through the supported project workflow.
+
+## AI providers and OpenRouter keys
+
+### Built-in provider
+
+The server-backed built-in provider uses the Lovable AI Gateway. The provider key stays on the server. The server also uses the gateway for embedding generation when vector indexing is enabled.
+
+### Bring your own OpenRouter key
+
+Open **AI model settings** in the app, choose **My OpenRouter key**, connect a key, then select one of the free models available for that key. The app checks the key and loads the model list before enabling it.
+
+- The key is kept in that browser's local storage so the preference survives a reload.
+- When the app server is available, the browser sends the key in a request header; the server forwards it to OpenRouter and does not save it in the database.
+- When the app server is unavailable, the browser can send the request directly to OpenRouter.
+- The key is not included in chat history or workspace records. Removing it in model settings clears it from the browser.
+- A key in local storage is accessible to scripts running on the same site. Only use a trusted Scout deployment and protect the site against script injection.
+
+Scout uses the chosen model to generate language. Event records and access control still come from Supabase. OpenRouter may enforce per-model availability, quotas, and rate limits, including for free models.
+
+### No configured language model
+
+The app can still parse common search intents and produce deterministic summaries from available database results. That fallback is not a general-purpose LLM. With the API server offline, an OpenRouter key is required for live generative model responses; deterministic chat and grounded search summaries remain available.
+
+## Local development
+
+### Requirements
+
+- Node.js 22 or newer, or Bun 1.2 or newer
+- A connected Supabase project with the app's existing schema and policies
+- Optional: a configured Lovable AI Gateway for built-in model responses and embedding indexing
+
+### Start the app
+
+1. Copy the example environment file:
+
+   ```sh
+   cp .env.example .env
+   ```
+
+2. Set the Supabase URL and publishable key for the connected project. Set server-only provider secrets only in the local server environment.
+3. Install dependencies and start the dev server:
+
+   ```sh
+   bun install
+   bun run dev
+   ```
+
+4. Open [http://localhost:3000](http://localhost:3000). Check [http://localhost:3000/api/v1/health](http://localhost:3000/api/v1/health) to inspect API and database readiness.
+
+### Common commands
 
 ```sh
-bun install
-bun run test          # Run Vitest unit & orchestration tests
-bun x tsc --noEmit    # Strict TypeScript check
-bun run lint          # ESLint + Prettier checks
-bun run dev           # Start local dev server (http://localhost:3000)
-bun run build         # Production Cloudflare/Nitro + Vite build
+bun run dev             # Start the local app
+bun run build           # Create the production build
+bun run preview         # Preview the built app
+bun run lint            # Run ESLint
+bun run test            # Run the Vitest suite
+bun x tsc --noEmit      # Run the TypeScript compiler without emitting files
 ```
 
----
+Tests are under `src/test/`. The application has unit and orchestration coverage for filters, ranking, intent parsing, UI validation, prompt safety, and route matching.
 
-## Test Suite
+## Environment configuration
 
-Tests live in `src/test/`:
-- `ranking.test.ts` — Tokenization, safe tsquery building, semantic normalization, hybrid ranking, match explanations, low-confidence flags.
-- `filters.test.ts` — Filter sanitization, reversed date-range correction, strict metadata predicates, UTC bounds.
-- `intent-parser.test.ts` — Multi-constraint NLP extraction, relative dates, follow-up refinement merging, diagrams/forms/table commands.
-- `ui-validator.test.ts` — Allowlisted component validation, unknown-key rejection, XSS/URL/Mermaid sanitization, payload limits, table commands.
-- `security.test.ts` — Prompt-injection detection, untrusted record delimiter escaping, CSV formula-injection neutralization.
-- `orchestrator.test.ts` — All 8 PRD end-to-end scenarios (cards, comparison tables, charts, flowcharts, forms, dashboards, zero-result handling, cross-tenant denial).
-- `app-routing.test.tsx` — Route tree matching across all application pages.
+Use deployment secrets or local `.env` values. Do not commit a real `.env` file. Values prefixed with `VITE_` are exposed to browser builds and must contain public configuration only.
+
+| Variable                                          | Required for                                                                   | Exposure                              |
+| ------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------- |
+| `VITE_SUPABASE_URL`                               | Browser Supabase client and browser fallback                                   | Public                                |
+| `VITE_SUPABASE_PUBLISHABLE_KEY`                   | Browser Supabase client and browser fallback                                   | Public; rely on RLS for authorization |
+| `SUPABASE_URL`                                    | Server-side Supabase operations; may also provide the runtime Supabase URL     | Server environment                    |
+| `SUPABASE_PUBLISHABLE_KEY`                        | Server-side requests that use the caller's Supabase identity                   | Public key, configured server-side    |
+| `SUPABASE_SERVICE_ROLE_KEY`                       | Privileged server operations such as embedding indexing                        | **Secret; server only**               |
+| `LOVABLE_API_KEY`                                 | Built-in chat provider and embedding generation                                | **Secret; server only**               |
+| `VITE_SUPABASE_PROJECT_ID`, `SUPABASE_PROJECT_ID` | Project metadata used by platform tooling                                      | Public metadata                       |
+| `LOVABLE_AI_GATEWAY_URL`                          | Optional Lovable platform configuration; not read directly by current app code | Platform-managed                      |
+
+The exact required settings depend on the runtime path:
+
+- **Browser-only fallback:** `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`; OpenRouter key for direct generative responses.
+- **Server-backed app:** Supabase server/public configuration plus the provider secrets needed by the enabled features.
+- **Vector indexing:** app server, `LOVABLE_API_KEY`, and server-side database credentials with the required privileges.
+
+Do not use a Supabase secret or service-role key as a publishable key. Do not rename a server secret with the `VITE_` prefix.
+
+## HTTP API
+
+All application API routes are served from the same origin as the app.
+
+| Endpoint                             | Methods                          | Purpose                                                                     |
+| ------------------------------------ | -------------------------------- | --------------------------------------------------------------------------- |
+| `/api/v1/health`                     | `GET`                            | API, database schema, event availability, and provider configuration status |
+| `/api/v1/chat`                       | `POST`                           | Conversational orchestration and SSE streaming                              |
+| `/api/v1/chat/sessions`              | `GET`, `POST`                    | List, search, or create chat sessions                                       |
+| `/api/v1/chat/sessions/:id`          | `GET`, `PATCH`, `DELETE`         | Read, update, or remove a session                                           |
+| `/api/v1/chat/sessions/:id/messages` | `GET`                            | Read session messages and validated UI response data                        |
+| `/api/v1/openrouter/models`          | `POST`                           | Validate a user key and fetch available free models                         |
+| `/api/v1/search/hybrid`              | `POST`                           | Hybrid event search                                                         |
+| `/api/v1/search/semantic`            | `POST`                           | Vector-focused event search                                                 |
+| `/api/v1/search/facets`              | `GET`                            | Workspace-visible filter values and counts                                  |
+| `/api/v1/search/history`             | `GET`                            | Recent search history                                                       |
+| `/api/v1/search/feedback`            | `POST`                           | Submit a search/answer rating                                               |
+| `/api/v1/embeddings/status`          | `GET`                            | Inspect event embedding/index coverage                                      |
+| `/api/v1/embeddings/generate`        | `POST`                           | Index pending events                                                        |
+| `/api/v1/embeddings/reindex`         | `POST`                           | Rebuild event embeddings                                                    |
+| `/api/v1/ui/generate`                | `POST`                           | Generate a structured UI response                                           |
+| `/api/v1/ui/validate`                | `POST`                           | Validate a UI response against the allowlist                                |
+| `/api/v1/ui/artifacts/:id`           | `GET`, `PATCH`                   | Read or update a saved UI artifact                                          |
+| `/api/v1/dashboards`                 | `GET`, `POST`                    | List or save dashboards                                                     |
+| `/api/v1/dashboards/:id`             | `GET`, `PATCH`, `DELETE`         | Read, update, or remove a dashboard                                         |
+| `/api/v1/dashboards/:id/duplicate`   | `POST`                           | Duplicate a dashboard                                                       |
+| `/api/v1/dashboards/:id/export`      | `POST`                           | Export dashboard data                                                       |
+| `/api/v1/analytics/query`            | `POST`                           | Query authorized analytics dimensions                                       |
+| `/api/v1/analytics/aggregate`        | `POST`                           | Compute aggregate metrics                                                   |
+| `/api/v1/analytics/metrics`          | `GET`                            | Read operational and search metrics                                         |
+| `/api/v1/events`                     | `GET`, `POST`                    | List visible events or create a workspace event                             |
+| `/api/v1/events/:id`                 | `PATCH`, `DELETE`                | Update or delete an authorized event                                        |
+| `/api/v1/workspaces`                 | `GET`, `POST`                    | List or create workspaces                                                   |
+| `/api/v1/workspaces/:id/members`     | `GET`, `POST`, `PATCH`, `DELETE` | List members, invite/add members, and change roles                          |
+| `/api/v1/workspaces/:id/audit`       | `GET`                            | Read workspace audit activity                                               |
+
+The health response reports readiness flags, not secret values. A successful HTTP response does not by itself mean the AI provider or every optional capability is configured; inspect the individual fields.
+
+## Security and access control
+
+- **Tenant boundaries:** workspace access is checked using authenticated user identity, membership roles, and Supabase row-level security. The browser publishable key does not grant privileged access.
+- **No model-generated SQL:** search and data operations use validated parameters, existing RPCs, and deterministic application code.
+- **Prompt safety:** retrieved database rows are treated as untrusted content and are not instructions that can change permissions.
+- **Validated UI:** the model can select only registered components. Schemas reject unsupported shapes and values before rendering; raw model-generated JavaScript or HTML is not executed.
+- **Server-only secrets:** keep `SUPABASE_SERVICE_ROLE_KEY` and `LOVABLE_API_KEY` in the server environment. Never expose them through `VITE_*`, source code, logs, or committed files.
+- **OpenRouter BYOK:** the key is browser-local and transiently forwarded to OpenRouter. It is not written to Supabase.
+- **Input controls:** API handlers validate request bodies and apply rate limits to server-backed operations.
+
+Review and test Supabase RLS policies whenever database access paths change. Browser fallback calls are subject to the same policies as any other publishable-key client.
+
+## Deployment and operations
+
+1. Connect the intended Supabase project and ensure the existing app schema, RPCs, auth providers, and RLS policies are available.
+2. Set public Supabase URL/key values for the client bundle and server runtime secrets in the deployment environment.
+3. Configure `LOVABLE_API_KEY` if built-in chat or embedding generation is required. OpenRouter keys are provided per user in AI model settings.
+4. Build using `bun run build` and deploy with the Nitro target configured for the hosting platform. The default Lovable Vite configuration is Cloudflare-oriented.
+5. After deployment, check `/api/v1/health`, sign in, verify workspace membership, and run a live search against the connected Supabase project.
+
+Operational notes:
+
+- If the server is unavailable, browser fallback is limited by the user's Supabase session, RLS grants, browser connectivity, and OpenRouter cross-origin access.
+- Vector search and embedding maintenance require the app server and embedding provider. Keyword and metadata search remain available when vectors are unavailable.
+- Server rate limits and telemetry are applied to API requests. Direct Supabase browser operations are governed by Supabase policies and platform limits.
+- Back up and monitor the connected Supabase project using the organization's Supabase/Lovable procedures.
+
+## Troubleshooting
+
+| Symptom                                               | Check                                                                                                                                                                                                                         |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| App reports missing Supabase configuration            | Confirm `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in the client build environment. For the server, also check `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. Rebuild after changing build-time `VITE_*` values. |
+| `/api/v1/health` reports schema not ready             | Verify the deployment points at the intended Supabase project and that the project has the existing Scout schema and `events` table. Manage schema through Lovable.                                                           |
+| Live event count is zero                              | Check whether events are present and published, then confirm workspace selection and membership. A healthy schema can legitimately have no visible events.                                                                    |
+| Private workspace search is denied                    | Sign in with a user who belongs to that workspace and confirm the member role and RLS policies.                                                                                                                               |
+| Chat works but gives deterministic answers            | Configure the built-in server provider or connect an OpenRouter key in AI model settings.                                                                                                                                     |
+| OpenRouter model list cannot load                     | Recheck the key, network access, and OpenRouter availability. With no app server, browser CORS/network policy may prevent the direct request.                                                                                 |
+| Browser fallback says Supabase is unavailable         | Check the browser Supabase URL/key, network access, current auth session, and database RLS/RPC permissions.                                                                                                                   |
+| Workspace event is saved but not semantically indexed | Restore the app server, gateway key, and server-side indexing credentials, then run the authorized pending-index operation.                                                                                                   |
+| Chat history is missing on another device             | Guest sessions are local to one browser. Sign in and confirm Supabase persistence is available for cross-device history.                                                                                                      |
+
+## Repository conventions
+
+- Keep the connected branch in a working state. Commits pushed to it sync back to Lovable; do not rewrite published history.
+- Database schema and policy changes belong in Lovable. Do not add or edit `supabase/migrations/` or `drizzle/` by hand.
+- Do not hand-edit generated files, including files marked as generated and `src/routeTree.gen.ts`.
+- Keep server secrets out of the repository. Use `.env.example` for placeholder names and local deployment documentation only.
+- Routes are file-based under `src/routes/`; the root layout is `src/routes/__root.tsx`.

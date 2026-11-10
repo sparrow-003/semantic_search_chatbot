@@ -43,10 +43,7 @@ export function eventsToCsv(events: Array<EventRecord | RankedEvent>): string {
   return [headers, ...rows].map((row) => row.map(escapeCsvCell).join(",")).join("\r\n");
 }
 
-export function eventsToMarkdownReport(
-  title: string,
-  events: Array<EventRecord | RankedEvent>,
-): string {
+export function eventsToMarkdownReport(title: string, events: Array<EventRecord | RankedEvent>): string {
   const lines: string[] = [
     `# ${title}`,
     "",
@@ -77,3 +74,4 @@ export function triggerDownload(filename: string, content: string, mimeType: str
   a.remove();
   URL.revokeObjectURL(url);
 }
+

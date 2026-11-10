@@ -21,8 +21,11 @@ import {
   assertWorkspaceAccess,
   createAnonSupabaseClient,
   getAdminSupabaseClientOptional,
+  getSupabasePublicConfig,
   HttpError,
+  isMissingSchemaError,
   isValidUuid,
+  missingSchemaError,
   type AuthContext,
 } from "./supabase.server";
 
@@ -227,8 +230,11 @@ export async function executeSearch(input: ExecuteSearchInput): Promise<SearchRe
       status: "error",
       latencyMs: Date.now() - started,
       query: input.query.slice(0, 120),
-      errorCategory: "rpc_error",
+      errorCategory: isMissingSchemaError(rpcError) ? "schema_not_initialized" : "rpc_error",
     });
+    if (isMissingSchemaError(rpcError)) {
+      throw missingSchemaError(getSupabasePublicConfig().url);
+    }
     throw new HttpError(500, "search_failed", `Search failed: ${rpcError.message}`);
   }
 
@@ -382,6 +388,9 @@ export async function fetchEventFacets(
     workspace_id: workspaceId as unknown as string,
   });
   if (error) {
+    if (isMissingSchemaError(error)) {
+      throw missingSchemaError(getSupabasePublicConfig().url);
+    }
     throw new HttpError(500, "db_error", `Unable to load event facets: ${error.message}`);
   }
   const raw = (data ?? {}) as Partial<Facets>;

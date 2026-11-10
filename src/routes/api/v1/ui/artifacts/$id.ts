@@ -10,8 +10,9 @@ export const Route = createFileRoute("/api/v1/ui/artifacts/$id")({
     handlers: {
       GET: async ({ request, params }) => {
         const { errorResponse, jsonResponse } = await import("@/lib/server/rate-limit.server");
-        const { resolveAuthContext, isValidUuid, HttpError } =
-          await import("@/lib/server/supabase.server");
+        const { resolveAuthContext, isValidUuid, HttpError } = await import(
+          "@/lib/server/supabase.server"
+        );
         try {
           const auth = await resolveAuthContext(request, { required: true });
           if (!isValidUuid(params.id)) {
@@ -31,10 +32,12 @@ export const Route = createFileRoute("/api/v1/ui/artifacts/$id")({
       },
 
       PATCH: async ({ request, params }) => {
-        const { errorResponse, jsonResponse, readBoundedJson } =
-          await import("@/lib/server/rate-limit.server");
-        const { resolveAuthContext, isValidUuid, HttpError } =
-          await import("@/lib/server/supabase.server");
+        const { errorResponse, jsonResponse, readBoundedJson } = await import(
+          "@/lib/server/rate-limit.server"
+        );
+        const { resolveAuthContext, isValidUuid, HttpError } = await import(
+          "@/lib/server/supabase.server"
+        );
         const { validateUISpec } = await import("@/lib/ui/validator");
         try {
           const auth = await resolveAuthContext(request, { required: true });
@@ -42,8 +45,7 @@ export const Route = createFileRoute("/api/v1/ui/artifacts/$id")({
             throw new HttpError(400, "invalid_id", "Artifact ID must be a valid message UUID.");
           }
           const body = patchArtifactSchema.safeParse(await readBoundedJson(request, 200_000));
-          if (!body.success)
-            throw new HttpError(400, "invalid_request", "Invalid artifact payload.");
+          if (!body.success) throw new HttpError(400, "invalid_request", "Invalid artifact payload.");
 
           const validated = validateUISpec(body.data.uiSpec);
           if (!validated.ok) {

@@ -24,6 +24,8 @@ export interface LocalChatMessage {
   modelUsed?: string;
   followUpSuggestions?: string[];
   securityNotice?: string;
+  runtimeNotice?: string;
+  executionMode?: "server" | "browser";
   latencyMs?: number;
   createdAt: string;
 }
@@ -198,26 +200,67 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       const res = await apiFetch<{ workspaces: WorkspaceItem[] }>("/api/v1/workspaces");
       setWorkspaces(res.workspaces);
     } catch {
-      setWorkspaces([]);
+      try {
+        const memberships = await supabase
+          .from("tenant_members")
+          .select("tenant_id, role")
+          .eq("user_id", session.user.id);
+        if (memberships.error) throw new Error(memberships.error.message);
+        const tenantIds = (memberships.data ?? []).map((membership) => membership.tenant_id);
+        if (!tenantIds.length) {
+          setWorkspaces([]);
+          return;
+        }
+        const tenants = await supabase
+          .from("tenants")
+          .select("id, name, created_by, created_at")
+          .in("id", tenantIds);
+        if (tenants.error) throw new Error(tenants.error.message);
+        setWorkspaces(
+          (tenants.data ?? []).map((tenant) => ({
+            id: tenant.id,
+            name: tenant.name,
+            created_by: tenant.created_by,
+            created_at: tenant.created_at,
+            role:
+              memberships.data?.find((membership) => membership.tenant_id === tenant.id)?.role ??
+              "member",
+          })),
+        );
+      } catch {
+        setWorkspaces([]);
+      }
     }
-  }, [session?.access_token]);
+  }, [session]);
 
   useEffect(() => {
     let mounted = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
+    let unsubscribe: () => void = () => {};
+    try {
+      const auth = supabase.auth;
+      void auth
+        .getSession()
+        .then(({ data }) => {
+          if (!mounted) return;
+          setSession(data.session);
+          setUser(data.session?.user ?? null);
+          setAuthReady(true);
+        })
+        .catch(() => {
+          if (mounted) setAuthReady(true);
+        });
+      const { data: listener } = auth.onAuthStateChange((_event, nextSession) => {
+        setSession(nextSession);
+        setUser(nextSession?.user ?? null);
+        setAuthReady(true);
+      });
+      unsubscribe = () => listener.subscription.unsubscribe();
+    } catch {
       setAuthReady(true);
-    });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-      setUser(nextSession?.user ?? null);
-      setAuthReady(true);
-    });
+    }
     return () => {
       mounted = false;
-      listener.subscription.unsubscribe();
+      unsubscribe();
     };
   }, []);
 
@@ -377,6 +420,8 @@ export function turnResultToAssistantMessage(res: ChatTurnResult): LocalChatMess
     modelUsed: res.modelUsed,
     followUpSuggestions: res.followUpSuggestions,
     ...(res.securityNotice ? { securityNotice: res.securityNotice } : {}),
+    ...(res.runtimeNotice ? { runtimeNotice: res.runtimeNotice } : {}),
+    ...(res.executionMode ? { executionMode: res.executionMode } : {}),
     latencyMs: res.latencyMs,
     createdAt: new Date().toISOString(),
   };

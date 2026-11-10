@@ -20,8 +20,9 @@ export const Route = createFileRoute("/api/v1/search/feedback")({
           getClientKey,
           RATE_LIMITS,
         } = await import("@/lib/server/rate-limit.server");
-        const { resolveAuthContext, getAdminSupabaseClientOptional, HttpError } =
-          await import("@/lib/server/supabase.server");
+        const { resolveAuthContext, getAdminSupabaseClientOptional, HttpError } = await import(
+          "@/lib/server/supabase.server"
+        );
         try {
           const auth = await resolveAuthContext(request);
           checkRateLimit(getClientKey(request, auth?.userId), RATE_LIMITS.default);
@@ -48,3 +49,4 @@ export const Route = createFileRoute("/api/v1/search/feedback")({
     },
   },
 });
+

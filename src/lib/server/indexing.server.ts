@@ -5,8 +5,11 @@ import {
   assertWorkspaceAccess,
   createAnonSupabaseClient,
   getAdminSupabaseClientOptional,
+  getSupabasePublicConfig,
   HttpError,
+  isMissingSchemaError,
   isPlatformAdmin,
+  missingSchemaError,
   type AuthContext,
 } from "./supabase.server";
 import { recordTelemetry } from "./rate-limit.server";
@@ -55,6 +58,9 @@ export async function getEmbeddingStatus(
 
   const { data: rows, error } = await query;
   if (error) {
+    if (isMissingSchemaError(error)) {
+      throw missingSchemaError(getSupabasePublicConfig().url);
+    }
     throw new HttpError(500, "db_error", `Unable to load event index status: ${error.message}`);
   }
 

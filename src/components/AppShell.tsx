@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   Activity,
@@ -12,6 +12,7 @@ import {
   Moon,
   Plus,
   Search,
+  Settings2,
   Sparkles,
   Sun,
   Trash2,
@@ -54,7 +55,13 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { apiFetch, type ChatSessionItem, type SavedDashboardItem } from "@/lib/client/api";
+import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/lib/client/workspace-context";
+import {
+  hasCompletedModelSettingsSetup,
+  markModelSettingsSetupComplete,
+} from "@/lib/client/model-settings";
+import { ModelSettingsDialog } from "./ModelSettingsDialog";
 import { CanvasInspectorSheet } from "./CanvasInspectorSheet";
 import { EventDetailSheet } from "./EventDetailSheet";
 
@@ -63,11 +70,17 @@ export function AppShell({
   onSelectSession,
   activeSessionId,
   onNewChat,
+  modelSettingsOpen: controlledModelSettingsOpen,
+  onModelSettingsOpenChange,
+  onModelSettingsSetupComplete,
 }: {
   children: React.ReactNode;
   onSelectSession?: (id: string) => void;
   activeSessionId?: string | null;
   onNewChat?: () => void;
+  modelSettingsOpen?: boolean;
+  onModelSettingsOpenChange?: (open: boolean) => void;
+  onModelSettingsSetupComplete?: () => void;
 }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -88,39 +101,88 @@ export function AppShell({
   } = useWorkspace();
 
   const [sessionFilter, setSessionFilter] = useState("");
+  const [localModelSettingsOpen, setLocalModelSettingsOpen] = useState(false);
+  const modelSettingsOpen = controlledModelSettingsOpen ?? localModelSettingsOpen;
+  const setModelSettingsOpen = useCallback(
+    (open: boolean) => {
+      if (controlledModelSettingsOpen === undefined) setLocalModelSettingsOpen(open);
+      onModelSettingsOpenChange?.(open);
+      if (!open) {
+        markModelSettingsSetupComplete();
+        onModelSettingsSetupComplete?.();
+      }
+    },
+    [controlledModelSettingsOpen, onModelSettingsOpenChange, onModelSettingsSetupComplete],
+  );
+
+  useEffect(() => {
+    if (location.pathname === "/" && !hasCompletedModelSettingsSetup()) {
+      setModelSettingsOpen(true);
+    }
+  }, [location.pathname, setModelSettingsOpen]);
 
   const { data: remoteSessions } = useQuery({
     queryKey: ["chat-sessions", user?.id],
     enabled: Boolean(user),
-    queryFn: () => apiFetch<{ sessions: ChatSessionItem[] }>("/api/v1/chat/sessions"),
+    queryFn: async () => {
+      try {
+        return await apiFetch<{ sessions: ChatSessionItem[] }>("/api/v1/chat/sessions");
+      } catch {
+        const { data, error } = await supabase
+          .from("chat_sessions")
+          .select("id, title, is_saved, tenant_id, created_at, updated_at")
+          .order("updated_at", { ascending: false })
+          .limit(50);
+        if (error) throw new Error(error.message);
+        return { sessions: (data ?? []) as ChatSessionItem[] };
+      }
+    },
   });
 
   const { data: remoteDashboards } = useQuery({
     queryKey: ["saved-dashboards", user?.id, activeWorkspaceId],
     enabled: Boolean(user),
-    queryFn: () =>
-      apiFetch<{ dashboards: SavedDashboardItem[] }>(
-        activeWorkspaceId
-          ? `/api/v1/dashboards?workspaceId=${encodeURIComponent(activeWorkspaceId)}`
-          : "/api/v1/dashboards",
-      ),
+    queryFn: async () => {
+      try {
+        return await apiFetch<{ dashboards: SavedDashboardItem[] }>(
+          activeWorkspaceId
+            ? `/api/v1/dashboards?workspaceId=${encodeURIComponent(activeWorkspaceId)}`
+            : "/api/v1/dashboards",
+        );
+      } catch {
+        let query = supabase
+          .from("saved_dashboards")
+          .select("id, tenant_id, owner_id, name, visibility, configuration, created_at, updated_at")
+          .order("updated_at", { ascending: false })
+          .limit(50);
+        if (activeWorkspaceId) query = query.eq("tenant_id", activeWorkspaceId);
+        const { data, error } = await query;
+        if (error) throw new Error(error.message);
+        return { dashboards: (data ?? []) as SavedDashboardItem[] };
+      }
+    },
   });
 
-  const combinedSessions = user
-    ? (remoteSessions?.sessions ?? []).map((s) => ({
+  const remoteSessionItems = (remoteSessions?.sessions ?? []).map((s) => ({
         id: s.id,
         title: s.title,
         isSaved: s.is_saved,
         updatedAt: s.updated_at,
         remote: true,
-      }))
-    : localSessions.map((s) => ({
+      }));
+  const remoteSessionIds = new Set(remoteSessionItems.map((s) => s.id));
+  const localSessionItems = localSessions
+    .filter((s) => !remoteSessionIds.has(s.id))
+    .map((s) => ({
         id: s.id,
         title: s.title,
         isSaved: s.isSaved,
         updatedAt: s.updatedAt,
         remote: false,
       }));
+  const combinedSessions = user
+    ? [...remoteSessionItems, ...localSessionItems]
+    : localSessionItems;
 
   const filteredSessions = combinedSessions.filter((s) =>
     !sessionFilter.trim()
@@ -142,7 +204,12 @@ export function AppShell({
 
   const handleDeleteSession = async (id: string, remote: boolean) => {
     if (remote) {
-      await apiFetch(`/api/v1/chat/sessions/${id}`, { method: "DELETE" });
+      try {
+        await apiFetch(`/api/v1/chat/sessions/${id}`, { method: "DELETE" });
+      } catch {
+        const { error } = await supabase.from("chat_sessions").delete().eq("id", id);
+        if (error) throw new Error(error.message);
+      }
       await queryClient.invalidateQueries({ queryKey: ["chat-sessions"] });
     } else {
       deleteLocalSession(id);
@@ -317,9 +384,7 @@ export function AppShell({
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1 text-left group-data-[collapsible=icon]:hidden">
-                    <div className="truncate text-xs font-medium">
-                      {profile?.displayName ?? "User"}
-                    </div>
+                    <div className="truncate text-xs font-medium">{profile?.displayName ?? "User"}</div>
                     <div className="truncate text-[10px] text-muted-foreground">{user.email}</div>
                   </div>
                 </Button>
@@ -347,12 +412,7 @@ export function AppShell({
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button
-              asChild
-              size="sm"
-              variant="outline"
-              className="w-full justify-start gap-2 text-xs"
-            >
+            <Button asChild size="sm" variant="outline" className="w-full justify-start gap-2 text-xs">
               <Link to="/auth">
                 <LogIn className="size-3.5 shrink-0" />
                 <span className="group-data-[collapsible=icon]:hidden">Sign in / Save work</span>
@@ -376,7 +436,7 @@ export function AppShell({
                   <SelectValue placeholder="Public Event Catalog" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="public">Public Event Catalog (48)</SelectItem>
+                  <SelectItem value="public">Public Event Catalog</SelectItem>
                   {workspaces.map((ws) => (
                     <SelectItem key={ws.id} value={ws.id}>
                       {ws.name} ({ws.role})
@@ -391,6 +451,17 @@ export function AppShell({
             <Badge variant="outline" className="hidden text-[11px] sm:inline-flex">
               {activeWorkspaceId ? "Workspace Scoped" : "Public Events"}
             </Badge>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              aria-label="AI model settings"
+              title="AI model settings"
+              onClick={() => setModelSettingsOpen(true)}
+            >
+              <Settings2 className="size-4" />
+            </Button>
             <Button
               type="button"
               variant="ghost"
@@ -411,6 +482,8 @@ export function AppShell({
 
       <EventDetailSheet />
       <CanvasInspectorSheet />
+      <ModelSettingsDialog open={modelSettingsOpen} onOpenChange={setModelSettingsOpen} />
     </SidebarProvider>
   );
 }
+

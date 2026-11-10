@@ -7,7 +7,9 @@ import {
   type UIResponse,
 } from "./schema";
 
-export type UIValidationResult = { ok: true; data: UIResponse } | { ok: false; errors: string[] };
+export type UIValidationResult =
+  | { ok: true; data: UIResponse }
+  | { ok: false; errors: string[] };
 
 const MERMAID_HEADER_RE =
   /^(flowchart|graph|sequenceDiagram|erDiagram|stateDiagram-v2|stateDiagram|mindmap|journey)\b/;
@@ -26,9 +28,7 @@ const DANGEROUS_MERMAID_PATTERNS = [
  * Validate a Mermaid diagram definition against an allowlisted set of diagram
  * headers and reject active scripts, DOM handlers, or link injection directives.
  */
-export function sanitizeMermaidCode(
-  raw: string,
-): { ok: true; code: string } | { ok: false; reason: string } {
+export function sanitizeMermaidCode(raw: string): { ok: true; code: string } | { ok: false; reason: string } {
   const code = raw.trim();
   if (!code || code.length > 8000) {
     return { ok: false, reason: "Diagram definition is empty or exceeds 8,000 characters." };
@@ -42,10 +42,7 @@ export function sanitizeMermaidCode(
   }
   for (const pat of DANGEROUS_MERMAID_PATTERNS) {
     if (pat.test(code)) {
-      return {
-        ok: false,
-        reason: "Diagram definition contains disallowed script or callback syntax.",
-      };
+      return { ok: false, reason: "Diagram definition contains disallowed script or callback syntax." };
     }
   }
   return { ok: true, code };
@@ -134,10 +131,7 @@ export interface TableRefinementCommand {
  * Mutate a validated DataTableConfig safely in response to natural-language
  * table refinement commands ("hide description", "sort by date", "top 10").
  */
-export function applyTableCommand(
-  config: DataTableConfig,
-  cmd: TableRefinementCommand,
-): DataTableConfig {
+export function applyTableCommand(config: DataTableConfig, cmd: TableRefinementCommand): DataTableConfig {
   let visible = [...config.visibleColumns];
   if (cmd.hideColumns?.length) {
     const hidden = new Set(cmd.hideColumns);
@@ -166,3 +160,4 @@ export function applyTableCommand(
   }
   return next;
 }
+

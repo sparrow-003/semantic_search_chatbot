@@ -26,6 +26,28 @@ export const BUILT_IN_MODELS = [
 
 const STORAGE_KEY = "scout.model-settings.v1";
 const CHANGE_EVENT = "scout:model-settings";
+const SETUP_COMPLETE_KEY = "scout.model-settings.setup-complete.v1";
+
+export function hasCompletedModelSettingsSetup(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return (
+      window.localStorage.getItem(SETUP_COMPLETE_KEY) === "true" ||
+      window.localStorage.getItem(STORAGE_KEY) !== null
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function markModelSettingsSetupComplete(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(SETUP_COMPLETE_KEY, "true");
+  } catch {
+    // Settings still work for this tab if browser storage is unavailable.
+  }
+}
 
 export const DEFAULT_MODEL_SETTINGS: ModelSettings = {
   provider: "lovable",
@@ -54,9 +76,11 @@ function readSettings(): ModelSettings {
 
 export function useModelSettings() {
   const [settings, setSettings] = useState<ModelSettings>(DEFAULT_MODEL_SETTINGS);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     setSettings(readSettings());
+    setReady(true);
     const sync = () => setSettings(readSettings());
     window.addEventListener(CHANGE_EVENT, sync);
     window.addEventListener("storage", sync);
@@ -68,7 +92,11 @@ export function useModelSettings() {
 
   const update = useCallback((patch: Partial<ModelSettings>) => {
     const next = { ...readSettings(), ...patch };
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // Keep the preference active in this tab when browser storage is blocked.
+    }
     setSettings(next);
     window.dispatchEvent(new Event(CHANGE_EVENT));
   }, []);
@@ -80,9 +108,9 @@ export function useModelSettings() {
       : (BUILT_IN_MODELS.find((m) => m.id === settings.lovableModel)?.label ??
         settings.lovableModel);
 
-  const openRouterReady = settings.openRouterKey.startsWith("sk-or-");
+  const openRouterReady = /^sk-or-[A-Za-z0-9_-]{10,200}$/.test(settings.openRouterKey.trim());
 
-  return { settings, update, activeModelLabel, openRouterReady };
+  return { settings, update, activeModelLabel, openRouterReady, ready };
 }
 
 export function maskKey(key: string): string {

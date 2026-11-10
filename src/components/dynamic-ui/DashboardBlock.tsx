@@ -1,5 +1,13 @@
 import { lazy, Suspense, useMemo, useState } from "react";
-import { ArrowLeftRight, ArrowUp, Download, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
+import {
+  ArrowLeftRight,
+  ArrowUp,
+  Download,
+  Plus,
+  RefreshCw,
+  Save,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,7 +42,9 @@ import {
 import { cn } from "@/lib/utils";
 import { DataTableBlock } from "./DataTableBlock";
 
-const LazyChartBlock = lazy(() => import("./ChartBlock").then((m) => ({ default: m.ChartBlock })));
+const LazyChartBlock = lazy(() =>
+  import("./ChartBlock").then((m) => ({ default: m.ChartBlock })),
+);
 
 type DashboardProps = Extract<UIComponent, { type: "dashboard" }>["props"];
 
@@ -153,7 +163,9 @@ export function DashboardBlock({
     setConfig((prev) => ({
       ...prev,
       widgets: prev.widgets.map((w) =>
-        w.id === id ? { ...w, colSpan: w.colSpan === 4 ? 6 : w.colSpan === 6 ? 12 : 4 } : w,
+        w.id === id
+          ? { ...w, colSpan: w.colSpan === 4 ? 6 : w.colSpan === 6 ? 12 : 4 }
+          : w,
       ),
     }));
   };
@@ -327,10 +339,7 @@ export function DashboardBlock({
         {addingWidget && (
           <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-3">
             <span className="text-xs font-medium">Add Chart Widget:</span>
-            <Select
-              value={newWidgetDim}
-              onValueChange={(v) => setNewWidgetDim(v as ChartDimension)}
-            >
+            <Select value={newWidgetDim} onValueChange={(v) => setNewWidgetDim(v as ChartDimension)}>
               <SelectTrigger className="h-8 w-[140px] text-xs">
                 <SelectValue />
               </SelectTrigger>
@@ -418,9 +427,7 @@ export function DashboardBlock({
                   {widget.kind === "metric" && (
                     <Card className="bg-muted/20">
                       <CardContent className="p-4">
-                        <div className="text-xs font-medium text-muted-foreground">
-                          {widget.title}
-                        </div>
+                        <div className="text-xs font-medium text-muted-foreground">{widget.title}</div>
                         <div className="mt-1.5 text-3xl font-bold tabular-nums">
                           {kpis[widget.metricKey ?? "total"]}
                         </div>
@@ -461,14 +468,7 @@ export function DashboardBlock({
                         dataSource: props.dataSource,
                         events: filteredEvents,
                         config: widget.tableConfig ?? {
-                          visibleColumns: [
-                            "title",
-                            "category",
-                            "format",
-                            "startAt",
-                            "location",
-                            "score",
-                          ],
+                          visibleColumns: ["title", "category", "format", "startAt", "location", "score"],
                           sortBy: "startAt",
                           sortDir: "asc",
                           groupBy: "none",
@@ -487,3 +487,4 @@ export function DashboardBlock({
     </Card>
   );
 }
+

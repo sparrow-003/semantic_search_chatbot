@@ -51,6 +51,7 @@ export function ModelSettingsDialog({
         provider: "openrouter",
       });
       setKeyDraft("");
+      onOpenChange(false);
       toast.success(`Connected — ${res.models.length} free models available`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not connect to OpenRouter");
@@ -82,7 +83,8 @@ export function ModelSettingsDialog({
             <Sparkles className="size-4 text-primary" /> Model settings
           </DialogTitle>
           <DialogDescription>
-            Choose which AI writes Scout's answers. Event results always come from the database.
+            Choose Scout's AI provider. Use the configured built-in provider or connect your own
+            OpenRouter key to select a free model. Event results always come from the database.
           </DialogDescription>
         </DialogHeader>
 
@@ -96,7 +98,10 @@ export function ModelSettingsDialog({
           </TabsList>
 
           <TabsContent value="lovable" className="space-y-2 pt-2">
-            <p className="text-xs text-muted-foreground">Included with Scout — no key needed.</p>
+            <p className="text-xs text-muted-foreground">
+              Uses this deployment's Lovable AI Gateway. The app server and its provider key must be
+              configured; deterministic search summaries remain available without them.
+            </p>
             <div className="grid gap-1.5 sm:grid-cols-2">
               {BUILT_IN_MODELS.map((m) => (
                 <button
@@ -113,6 +118,16 @@ export function ModelSettingsDialog({
                 </button>
               ))}
             </div>
+            <Button
+              type="button"
+              className="w-full"
+              onClick={() => {
+                update({ provider: "lovable" });
+                onOpenChange(false);
+              }}
+            >
+              Continue with built-in AI
+            </Button>
           </TabsContent>
 
           <TabsContent value="openrouter" className="space-y-3 pt-2">
@@ -187,8 +202,9 @@ export function ModelSettingsDialog({
                   >
                     openrouter.ai/keys <ExternalLink className="size-3" />
                   </a>
-                  . Your key stays in this browser and is only passed through to OpenRouter when
-                  you send a message — Scout never stores it.
+                  . Your key is saved in this browser's local storage. It is sent to the app server
+                  for validation and chat when available, or directly to OpenRouter in browser mode;
+                  it is not written to your Scout database.
                 </p>
               </form>
             )}

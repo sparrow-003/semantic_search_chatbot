@@ -5,8 +5,9 @@ export const Route = createFileRoute("/api/v1/search/facets")({
     handlers: {
       GET: async ({ request }) => {
         const { errorResponse, jsonResponse } = await import("@/lib/server/rate-limit.server");
-        const { resolveAuthContext, isValidUuid, HttpError } =
-          await import("@/lib/server/supabase.server");
+        const { resolveAuthContext, isValidUuid, HttpError } = await import(
+          "@/lib/server/supabase.server"
+        );
         const { fetchEventFacets } = await import("@/lib/server/search.server");
         try {
           const auth = await resolveAuthContext(request);
@@ -24,3 +25,4 @@ export const Route = createFileRoute("/api/v1/search/facets")({
     },
   },
 });
+

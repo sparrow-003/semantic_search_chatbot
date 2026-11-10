@@ -157,11 +157,7 @@ export function ChartBlock({ props }: { props: ChartProps }) {
                   </Bar>
                 </BarChart>
               ) : chartType === "horizontal_bar" ? (
-                <BarChart
-                  data={chartData}
-                  layout="vertical"
-                  margin={{ top: 8, right: 20, left: 20, bottom: 8 }}
-                >
+                <BarChart data={chartData} layout="vertical" margin={{ top: 8, right: 20, left: 20, bottom: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border/60" />
                   <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
                   <YAxis type="category" dataKey="label" width={115} tick={{ fontSize: 11 }} />
@@ -175,13 +171,7 @@ export function ChartBlock({ props }: { props: ChartProps }) {
               ) : chartType === "stacked_bar" && props.seriesKeys?.length ? (
                 <BarChart data={chartData} margin={{ top: 10, right: 16, left: 0, bottom: 28 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border/60" />
-                  <XAxis
-                    dataKey="label"
-                    tick={{ fontSize: 11 }}
-                    angle={-15}
-                    textAnchor="end"
-                    height={48}
-                  />
+                  <XAxis dataKey="label" tick={{ fontSize: 11 }} angle={-15} textAnchor="end" height={48} />
                   <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                   <Tooltip />
                   <Legend />
@@ -222,12 +212,7 @@ export function ChartBlock({ props }: { props: ChartProps }) {
               ) : chartType === "scatter" ? (
                 <ScatterChart margin={{ top: 10, right: 16, left: 0, bottom: 16 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border/60" />
-                  <XAxis
-                    type="number"
-                    dataKey="secondaryValue"
-                    name="Tech Tags"
-                    tick={{ fontSize: 11 }}
-                  />
+                  <XAxis type="number" dataKey="secondaryValue" name="Tech Tags" tick={{ fontSize: 11 }} />
                   <YAxis type="number" dataKey="value" name="Relevance %" tick={{ fontSize: 11 }} />
                   <ZAxis dataKey="label" name="Event" />
                   <Tooltip cursor={{ strokeDasharray: "3 3" }} />
@@ -285,3 +270,4 @@ export function ChartBlock({ props }: { props: ChartProps }) {
     </Card>
   );
 }
+

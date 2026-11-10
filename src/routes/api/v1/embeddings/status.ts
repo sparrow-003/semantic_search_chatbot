@@ -5,8 +5,9 @@ export const Route = createFileRoute("/api/v1/embeddings/status")({
     handlers: {
       GET: async ({ request }) => {
         const { errorResponse, jsonResponse } = await import("@/lib/server/rate-limit.server");
-        const { resolveAuthContext, isValidUuid, HttpError } =
-          await import("@/lib/server/supabase.server");
+        const { resolveAuthContext, isValidUuid, HttpError } = await import(
+          "@/lib/server/supabase.server"
+        );
         const { getEmbeddingStatus } = await import("@/lib/server/indexing.server");
 
         try {
@@ -25,3 +26,4 @@ export const Route = createFileRoute("/api/v1/embeddings/status")({
     },
   },
 });
+

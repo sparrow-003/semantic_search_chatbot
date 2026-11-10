@@ -44,11 +44,7 @@ describe("natural language intent parser", () => {
     expect(chart.requestedDimension).toBe("category");
     expect(chart.reusePreviousResults).toBe(true);
 
-    const refine = parseUserIntent(
-      "Hide the description column and sort by event date",
-      prev,
-      NOV_2026,
-    );
+    const refine = parseUserIntent("Hide the description column and sort by event date", prev, NOV_2026);
     expect(refine.intent).toBe("refine_table");
     expect(refine.tableCommand?.hideColumns).toContain("description");
     expect(refine.tableCommand?.sortBy).toBe("startAt");
@@ -59,9 +55,7 @@ describe("natural language intent parser", () => {
     expect(flow.intent).toBe("generate_diagram");
     expect(flow.requestedDiagramType).toBe("flowchart");
 
-    const arch = parseUserIntent(
-      "Draw the complete architecture of this semantic search application",
-    );
+    const arch = parseUserIntent("Draw the complete architecture of this semantic search application");
     expect(arch.intent).toBe("generate_diagram");
     expect(arch.requestedDiagramType).toBe("architecture");
 
@@ -69,3 +63,4 @@ describe("natural language intent parser", () => {
     expect(form.intent).toBe("generate_form");
   });
 });
+

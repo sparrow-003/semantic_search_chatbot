@@ -25,9 +25,7 @@ describe("dynamic UI schema validation and sanitization", () => {
       type: "ui_response",
       version: "1.0",
       title: "Bad",
-      components: [
-        { id: "x", type: "raw_html_script", props: { html: "<script>alert(1)</script>" } },
-      ],
+      components: [{ id: "x", type: "raw_html_script", props: { html: "<script>alert(1)</script>" } }],
     });
     expect(badType.ok).toBe(false);
 
@@ -52,15 +50,11 @@ describe("dynamic UI schema validation and sanitization", () => {
   it("blocks unsafe URLs and malicious Mermaid directives", () => {
     expect(sanitizeExternalUrl("javascript:alert(1)")).toBeNull();
     expect(sanitizeExternalUrl("http://insecure.example.com")).toBeNull();
-    expect(sanitizeExternalUrl("https://events.example.com/ok")).toBe(
-      "https://events.example.com/ok",
-    );
+    expect(sanitizeExternalUrl("https://events.example.com/ok")).toBe("https://events.example.com/ok");
 
     expect(sanitizeMermaidCode("flowchart TD\n  A --> B").ok).toBe(true);
     expect(sanitizeMermaidCode("flowchart TD\n  click A call alert(1)").ok).toBe(false);
-    expect(sanitizeMermaidCode("flowchart TD\n  A[<script>alert(1)</script>] --> B").ok).toBe(
-      false,
-    );
+    expect(sanitizeMermaidCode("flowchart TD\n  A[<script>alert(1)</script>] --> B").ok).toBe(false);
     expect(sanitizeMermaidCode("unknownHeader\n  A --> B").ok).toBe(false);
   });
 
@@ -123,3 +117,4 @@ describe("dynamic UI schema validation and sanitization", () => {
     expect(next.maxRows).toBe(5);
   });
 });
+

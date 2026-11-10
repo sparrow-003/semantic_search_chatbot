@@ -56,6 +56,8 @@ export interface ChatTurnResult {
   modelUsed: string;
   followUpSuggestions: string[];
   securityNotice?: string;
+  runtimeNotice?: string;
+  executionMode?: "server" | "browser";
   latencyMs: number;
 }
 
@@ -243,8 +245,101 @@ export interface OpenRouterKeyDetails {
 export async function fetchOpenRouterModels(
   apiKey: string,
 ): Promise<{ key: OpenRouterKeyDetails; models: OpenRouterModelItem[] }> {
-  return apiFetch("/api/v1/openrouter/models", {
-    method: "POST",
-    headers: { "x-openrouter-key": apiKey.trim() },
-  });
+  try {
+    return await apiFetch("/api/v1/openrouter/models", {
+      method: "POST",
+      headers: { "x-openrouter-key": apiKey.trim() },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (
+      !(err instanceof TypeError) &&
+      !/failed to fetch|networkerror|load failed|Request failed \((404|500|502|503|504)\)/i.test(
+        message,
+      )
+    ) {
+      throw err;
+    }
+
+    const openRouterHeaders = {
+      Authorization: `Bearer ${apiKey.trim()}`,
+      "Content-Type": "application/json",
+    };
+    const [keyResponse, modelsResponse] = await Promise.all([
+      fetch("https://openrouter.ai/api/v1/key", { headers: openRouterHeaders }),
+      fetch("https://openrouter.ai/api/v1/models"),
+    ]);
+    const keyText = await keyResponse.text();
+    const modelsText = await modelsResponse.text();
+    if (!keyResponse.ok) {
+      let detail = "";
+      try {
+        const body = JSON.parse(keyText) as { error?: { message?: string } };
+        detail = body.error?.message ?? "";
+      } catch {
+        detail = "";
+      }
+      throw new Error(
+        keyResponse.status === 401 || keyResponse.status === 403
+          ? "OpenRouter rejected your API key. Check the key and try again."
+          : detail || `OpenRouter key check failed (${keyResponse.status}).`,
+      );
+    }
+    if (!modelsResponse.ok) throw new Error(`Could not load OpenRouter models (${modelsResponse.status}).`);
+
+    const keyBody = JSON.parse(keyText) as {
+      data?: {
+        label?: unknown;
+        is_free_tier?: unknown;
+        limit?: unknown;
+        limit_remaining?: unknown;
+        usage?: unknown;
+      };
+    };
+    const modelsBody = JSON.parse(modelsText) as {
+      data?: Array<{
+        id?: unknown;
+        name?: unknown;
+        description?: unknown;
+        context_length?: unknown;
+        pricing?: { prompt?: unknown; completion?: unknown; request?: unknown };
+        architecture?: { input_modalities?: unknown; output_modalities?: unknown };
+      }>;
+    };
+    const models = (modelsBody.data ?? [])
+      .filter((model) => {
+        if (typeof model.id !== "string") return false;
+        const price = model.pricing ?? {};
+        const zero = (value: unknown) =>
+          value === undefined || value === null || (Number.isFinite(Number(value)) && Number(value) === 0);
+        if (!zero(price.prompt) || !zero(price.completion) || !zero(price.request)) return false;
+        if (price.prompt === undefined && price.completion === undefined && model.id !== "openrouter/free") {
+          return false;
+        }
+        const output = model.architecture?.output_modalities;
+        return !Array.isArray(output) || output.includes("text");
+      })
+      .map((model) => ({
+        id: model.id as string,
+        name: typeof model.name === "string" ? model.name : (model.id as string),
+        description: typeof model.description === "string" ? model.description.slice(0, 240) : "",
+        contextLength: typeof model.context_length === "number" ? model.context_length : null,
+        inputModalities: Array.isArray(model.architecture?.input_modalities)
+          ? model.architecture.input_modalities.filter((value): value is string => typeof value === "string")
+          : ["text"],
+        isRouter: model.id === "openrouter/free",
+      }))
+      .sort((a, b) => (a.isRouter === b.isRouter ? a.name.localeCompare(b.name) : a.isRouter ? -1 : 1));
+    const keyData = keyBody.data ?? {};
+    return {
+      key: {
+        label: typeof keyData.label === "string" ? keyData.label : null,
+        isFreeTier: keyData.is_free_tier === true,
+        limit: typeof keyData.limit === "number" ? keyData.limit : null,
+        limitRemaining: typeof keyData.limit_remaining === "number" ? keyData.limit_remaining : null,
+        usage: typeof keyData.usage === "number" ? keyData.usage : null,
+      },
+      models,
+    };
+  }
 }

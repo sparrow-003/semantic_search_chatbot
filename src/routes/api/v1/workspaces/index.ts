@@ -39,14 +39,14 @@ export const Route = createFileRoute("/api/v1/workspaces/")({
       },
 
       POST: async ({ request }) => {
-        const { errorResponse, jsonResponse, readBoundedJson } =
-          await import("@/lib/server/rate-limit.server");
+        const { errorResponse, jsonResponse, readBoundedJson } = await import(
+          "@/lib/server/rate-limit.server"
+        );
         const { resolveAuthContext, HttpError } = await import("@/lib/server/supabase.server");
         try {
           const auth = await resolveAuthContext(request, { required: true });
           const parsed = createWorkspaceSchema.safeParse(await readBoundedJson(request));
-          if (!parsed.success)
-            throw new HttpError(400, "invalid_request", "Workspace name must be 1–80 chars.");
+          if (!parsed.success) throw new HttpError(400, "invalid_request", "Workspace name must be 1–80 chars.");
 
           const { data, error } = await auth!.client
             .from("tenants")
@@ -62,3 +62,4 @@ export const Route = createFileRoute("/api/v1/workspaces/")({
     },
   },
 });
+

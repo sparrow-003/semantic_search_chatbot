@@ -29,11 +29,7 @@ export const Route = createFileRoute("/api/v1/search/semantic")({
           checkRateLimit(getClientKey(request, auth?.userId), RATE_LIMITS.search);
           const body = semanticBodySchema.safeParse(await readBoundedJson(request));
           if (!body.success) {
-            throw new HttpError(
-              400,
-              "invalid_request",
-              body.error.issues[0]?.message ?? "Invalid semantic search request.",
-            );
+            throw new HttpError(400, "invalid_request", body.error.issues[0]?.message ?? "Invalid semantic search request.");
           }
           const result = await executeSearch({
             query: body.data.query,

@@ -11,16 +11,20 @@ export const Route = createFileRoute("/api/v1/dashboards/$id/export")({
   server: {
     handlers: {
       POST: async ({ request, params }) => {
-        const { errorResponse, jsonResponse, readBoundedJson } =
-          await import("@/lib/server/rate-limit.server");
-        const { resolveAuthContext, getAdminSupabaseClientOptional, isValidUuid, HttpError } =
-          await import("@/lib/server/supabase.server");
+        const { errorResponse, jsonResponse, readBoundedJson } = await import(
+          "@/lib/server/rate-limit.server"
+        );
+        const {
+          resolveAuthContext,
+          getAdminSupabaseClientOptional,
+          isValidUuid,
+          HttpError,
+        } = await import("@/lib/server/supabase.server");
         const { executeSearch } = await import("@/lib/server/search.server");
 
         try {
           const auth = await resolveAuthContext(request, { required: true });
-          if (!isValidUuid(params.id))
-            throw new HttpError(400, "invalid_id", "Invalid dashboard ID.");
+          if (!isValidUuid(params.id)) throw new HttpError(400, "invalid_id", "Invalid dashboard ID.");
           const body = exportBodySchema.safeParse(await readBoundedJson(request));
           if (!body.success) throw new HttpError(400, "invalid_request", "Invalid export format.");
 
@@ -45,11 +49,7 @@ export const Route = createFileRoute("/api/v1/dashboards/$id/export")({
             intent: "dashboard_export",
           });
 
-          const slug =
-            dash.name
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, "-")
-              .replace(/^-|-$/g, "") || "dashboard";
+          const slug = dash.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "dashboard";
           const admin = await getAdminSupabaseClientOptional();
           if (admin) {
             void admin
@@ -62,10 +62,7 @@ export const Route = createFileRoute("/api/v1/dashboards/$id/export")({
                 resource_id: dash.id,
                 metadata: { format: body.data.format, rowCount: searchRes.results.length },
               })
-              .then(
-                () => undefined,
-                () => undefined,
-              );
+              .then(() => undefined, () => undefined);
           }
 
           if (body.data.format === "csv") {
@@ -102,3 +99,4 @@ export const Route = createFileRoute("/api/v1/dashboards/$id/export")({
     },
   },
 });
+

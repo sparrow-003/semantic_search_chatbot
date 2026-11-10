@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { detectPromptInjection, sanitizeUserQuery, wrapUntrustedRecords } from "@/lib/ai/security";
+import {
+  detectPromptInjection,
+  sanitizeUserQuery,
+  wrapUntrustedRecords,
+} from "@/lib/ai/security";
 import { escapeCsvCell } from "@/lib/export";
 import type { RankedEvent } from "@/lib/events/types";
 
@@ -66,3 +70,4 @@ describe("security defenses and data isolation", () => {
     expect(escapeCsvCell("React, Next.js")).toBe('"React, Next.js"');
   });
 });
+

@@ -5,8 +5,9 @@ export const Route = createFileRoute("/api/v1/analytics/metrics")({
     handlers: {
       GET: async ({ request }) => {
         const { errorResponse, jsonResponse } = await import("@/lib/server/rate-limit.server");
-        const { resolveAuthContext, isValidUuid, HttpError } =
-          await import("@/lib/server/supabase.server");
+        const { resolveAuthContext, isValidUuid, HttpError } = await import(
+          "@/lib/server/supabase.server"
+        );
         const { getObservabilityMetrics } = await import("@/lib/server/analytics.server");
         try {
           const auth = await resolveAuthContext(request);
@@ -24,3 +25,4 @@ export const Route = createFileRoute("/api/v1/analytics/metrics")({
     },
   },
 });
+
