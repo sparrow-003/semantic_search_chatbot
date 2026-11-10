@@ -2,13 +2,25 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { filtersSchema, sanitizeFilters } from "@/lib/events/filters";
 import { SEARCH_MODES } from "@/lib/events/types";
+import { CHAT_MODES } from "@/lib/ai/conversation";
 
 const chatBodySchema = z.object({
   message: z.string().min(1).max(2000),
   sessionId: z.string().uuid().nullable().optional(),
   workspaceId: z.string().uuid().nullable().optional(),
   mode: z.enum(SEARCH_MODES).default("hybrid"),
-  model: z.string().max(80).nullable().optional(),
+  model: z
+    .string()
+    .max(120)
+    .regex(/^[a-z0-9][a-z0-9._\-/:]*$/i)
+    .nullable()
+    .optional(),
+  provider: z.enum(["lovable", "openrouter"]).default("lovable"),
+  chatMode: z.enum(CHAT_MODES).default("auto"),
+  history: z
+    .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(8000) }))
+    .max(40)
+    .optional(),
   explicitFilters: filtersSchema.partial().optional(),
   context: z
     .object({
@@ -40,6 +52,7 @@ export const Route = createFileRoute("/api/v1/chat/")({
         } = await import("@/lib/server/rate-limit.server");
         const { resolveAuthContext, HttpError } = await import("@/lib/server/supabase.server");
         const { runChatOrchestration } = await import("@/lib/server/orchestrator.server");
+        const { OPENROUTER_KEY_HEADER } = await import("@/lib/server/openrouter.server");
 
         try {
           const auth = await resolveAuthContext(request);
@@ -72,6 +85,13 @@ export const Route = createFileRoute("/api/v1/chat/")({
             prevTableConfig: parsed.data.prevTableConfig ?? null,
             auth,
             clientKey: getClientKey(request, auth?.userId),
+            provider: parsed.data.provider,
+            openRouterKey:
+              parsed.data.provider === "openrouter"
+                ? (request.headers.get(OPENROUTER_KEY_HEADER) ?? null)
+                : null,
+            chatMode: parsed.data.chatMode,
+            history: parsed.data.history ?? [],
           };
 
           if (!wantsStream) {
@@ -88,8 +108,10 @@ export const Route = createFileRoute("/api/v1/chat/")({
                 );
               };
               try {
-                const payload = await runChatOrchestration(chatInput, (stage) => {
-                  sendEvent("status", { stage });
+                const payload = await runChatOrchestration(chatInput, {
+                  onProgress: (stage) => sendEvent("status", { stage }),
+                  onPartial: (partial) => sendEvent("partial", partial),
+                  onDelta: (text) => sendEvent("delta", { text }),
                 });
                 sendEvent("result", payload);
                 sendEvent("done", { ok: true });

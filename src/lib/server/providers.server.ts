@@ -2,6 +2,7 @@ import {
   GatewayError,
   generateChatCompletion,
   generateEmbeddings,
+  streamChatCompletion,
   type ChatModels,
   type ChatRequest,
 } from "@lovable.dev/ai-gateway";
@@ -150,6 +151,70 @@ export const lovableEmbeddingProvider: EmbeddingProvider = {
     }
   },
 };
+
+export interface StreamTextOptions {
+  model?: ChatModels;
+  messages: Array<{ role: "system" | "user" | "assistant"; content: string }>;
+  temperature?: number;
+  maxTokens?: number;
+  onDelta?: (text: string) => void;
+}
+
+/** Stream text from the built-in AI gateway, emitting each chunk to onDelta. */
+export async function streamLovableText(
+  opts: StreamTextOptions,
+): Promise<LLMGenerationResult<string>> {
+  if (!isGatewayConfigured()) {
+    throw new Error("LOVABLE_API_KEY is not configured.");
+  }
+  const model = resolveAllowedChatModel(opts.model);
+  const started = Date.now();
+  try {
+    const stream = await streamChatCompletion(
+      {
+        model,
+        messages: opts.messages,
+        temperature: opts.temperature ?? 0.3,
+        max_tokens: opts.maxTokens ?? 1200,
+      } as ChatRequest,
+      { signal: AbortSignal.timeout(60_000) },
+    );
+    let text = "";
+    let tokens = 0;
+    for await (const ev of stream) {
+      const chunk = ev as {
+        choices?: Array<{ delta?: { content?: string | null } }>;
+        usage?: { total_tokens?: number } | null;
+      };
+      const delta = chunk.choices?.[0]?.delta?.content;
+      if (typeof delta === "string" && delta) {
+        text += delta;
+        opts.onDelta?.(delta);
+      }
+      if (typeof chunk.usage?.total_tokens === "number") tokens = chunk.usage.total_tokens;
+    }
+    const cost = estimateCostUsd(model, tokens);
+    recordTelemetry({
+      kind: "llm",
+      status: "ok",
+      latencyMs: Date.now() - started,
+      tokens,
+      estimatedCostUsd: cost,
+      model,
+    });
+    return { data: text.trim(), model, tokens, estimatedCostUsd: cost };
+  } catch (err) {
+    const norm = normalizeGatewayError(err);
+    recordTelemetry({
+      kind: "llm",
+      status: "error",
+      latencyMs: Date.now() - started,
+      errorCategory: norm.category,
+      model,
+    });
+    throw new Error(norm.message);
+  }
+}
 
 export const lovableLLMProvider: LLMProvider = {
   isAvailable: () => isGatewayConfigured(),

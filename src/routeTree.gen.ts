@@ -29,6 +29,7 @@ import { Route as ApiV1EmbeddingsReindexRouteImport } from './routes/api/v1/embe
 import { Route as ApiV1EmbeddingsStatusRouteImport } from './routes/api/v1/embeddings/status'
 import { Route as ApiV1EventsIndexRouteImport } from './routes/api/v1/events/index'
 import { Route as ApiV1EventsIdRouteImport } from './routes/api/v1/events/$id'
+import { Route as ApiV1OpenrouterModelsRouteImport } from './routes/api/v1/openrouter/models'
 import { Route as ApiV1SearchFacetsRouteImport } from './routes/api/v1/search/facets'
 import { Route as ApiV1SearchFeedbackRouteImport } from './routes/api/v1/search/feedback'
 import { Route as ApiV1SearchHistoryRouteImport } from './routes/api/v1/search/history'
@@ -147,6 +148,11 @@ const ApiV1EventsIdRoute = ApiV1EventsIdRouteImport.update({
   path: '/api/v1/events/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1OpenrouterModelsRoute = ApiV1OpenrouterModelsRouteImport.update({
+  id: '/api/v1/openrouter/models',
+  path: '/api/v1/openrouter/models',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1SearchFacetsRoute = ApiV1SearchFacetsRouteImport.update({
   id: '/api/v1/search/facets',
   path: '/api/v1/search/facets',
@@ -255,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/embeddings/reindex': typeof ApiV1EmbeddingsReindexRoute
   '/api/v1/embeddings/status': typeof ApiV1EmbeddingsStatusRoute
   '/api/v1/events/$id': typeof ApiV1EventsIdRoute
+  '/api/v1/openrouter/models': typeof ApiV1OpenrouterModelsRoute
   '/api/v1/search/facets': typeof ApiV1SearchFacetsRoute
   '/api/v1/search/feedback': typeof ApiV1SearchFeedbackRoute
   '/api/v1/search/history': typeof ApiV1SearchHistoryRoute
@@ -294,6 +301,7 @@ export interface FileRoutesByTo {
   '/api/v1/embeddings/reindex': typeof ApiV1EmbeddingsReindexRoute
   '/api/v1/embeddings/status': typeof ApiV1EmbeddingsStatusRoute
   '/api/v1/events/$id': typeof ApiV1EventsIdRoute
+  '/api/v1/openrouter/models': typeof ApiV1OpenrouterModelsRoute
   '/api/v1/search/facets': typeof ApiV1SearchFacetsRoute
   '/api/v1/search/feedback': typeof ApiV1SearchFeedbackRoute
   '/api/v1/search/history': typeof ApiV1SearchHistoryRoute
@@ -334,6 +342,7 @@ export interface FileRoutesById {
   '/api/v1/embeddings/reindex': typeof ApiV1EmbeddingsReindexRoute
   '/api/v1/embeddings/status': typeof ApiV1EmbeddingsStatusRoute
   '/api/v1/events/$id': typeof ApiV1EventsIdRoute
+  '/api/v1/openrouter/models': typeof ApiV1OpenrouterModelsRoute
   '/api/v1/search/facets': typeof ApiV1SearchFacetsRoute
   '/api/v1/search/feedback': typeof ApiV1SearchFeedbackRoute
   '/api/v1/search/history': typeof ApiV1SearchHistoryRoute
@@ -375,6 +384,7 @@ export interface FileRouteTypes {
     | '/api/v1/embeddings/reindex'
     | '/api/v1/embeddings/status'
     | '/api/v1/events/$id'
+    | '/api/v1/openrouter/models'
     | '/api/v1/search/facets'
     | '/api/v1/search/feedback'
     | '/api/v1/search/history'
@@ -414,6 +424,7 @@ export interface FileRouteTypes {
     | '/api/v1/embeddings/reindex'
     | '/api/v1/embeddings/status'
     | '/api/v1/events/$id'
+    | '/api/v1/openrouter/models'
     | '/api/v1/search/facets'
     | '/api/v1/search/feedback'
     | '/api/v1/search/history'
@@ -453,6 +464,7 @@ export interface FileRouteTypes {
     | '/api/v1/embeddings/reindex'
     | '/api/v1/embeddings/status'
     | '/api/v1/events/$id'
+    | '/api/v1/openrouter/models'
     | '/api/v1/search/facets'
     | '/api/v1/search/feedback'
     | '/api/v1/search/history'
@@ -492,6 +504,7 @@ export interface RootRouteChildren {
   ApiV1EmbeddingsReindexRoute: typeof ApiV1EmbeddingsReindexRoute
   ApiV1EmbeddingsStatusRoute: typeof ApiV1EmbeddingsStatusRoute
   ApiV1EventsIdRoute: typeof ApiV1EventsIdRoute
+  ApiV1OpenrouterModelsRoute: typeof ApiV1OpenrouterModelsRoute
   ApiV1SearchFacetsRoute: typeof ApiV1SearchFacetsRoute
   ApiV1SearchFeedbackRoute: typeof ApiV1SearchFeedbackRoute
   ApiV1SearchHistoryRoute: typeof ApiV1SearchHistoryRoute
@@ -656,6 +669,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1EventsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/openrouter/models': {
+      id: '/api/v1/openrouter/models'
+      path: '/api/v1/openrouter/models'
+      fullPath: '/api/v1/openrouter/models'
+      preLoaderRoute: typeof ApiV1OpenrouterModelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/v1/search/facets': {
       id: '/api/v1/search/facets'
       path: '/api/v1/search/facets'
@@ -805,6 +825,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiV1EmbeddingsReindexRoute: ApiV1EmbeddingsReindexRoute,
   ApiV1EmbeddingsStatusRoute: ApiV1EmbeddingsStatusRoute,
   ApiV1EventsIdRoute: ApiV1EventsIdRoute,
+  ApiV1OpenrouterModelsRoute: ApiV1OpenrouterModelsRoute,
   ApiV1SearchFacetsRoute: ApiV1SearchFacetsRoute,
   ApiV1SearchFeedbackRoute: ApiV1SearchFeedbackRoute,
   ApiV1SearchHistoryRoute: ApiV1SearchHistoryRoute,
