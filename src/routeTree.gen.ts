@@ -10,33 +10,405 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiV1HealthRouteImport } from './routes/api/v1/health'
+import { Route as ApiV1AnalyticsAggregateRouteImport } from './routes/api/v1/analytics/aggregate'
+import { Route as ApiV1AnalyticsMetricsRouteImport } from './routes/api/v1/analytics/metrics'
+import { Route as ApiV1AnalyticsQueryRouteImport } from './routes/api/v1/analytics/query'
+import { Route as ApiV1ChatIndexRouteImport } from './routes/api/v1/chat/index'
+import { Route as ApiV1DashboardsIndexRouteImport } from './routes/api/v1/dashboards/index'
+import { Route as ApiV1EmbeddingsGenerateRouteImport } from './routes/api/v1/embeddings/generate'
+import { Route as ApiV1EmbeddingsReindexRouteImport } from './routes/api/v1/embeddings/reindex'
+import { Route as ApiV1EmbeddingsStatusRouteImport } from './routes/api/v1/embeddings/status'
+import { Route as ApiV1EventsIndexRouteImport } from './routes/api/v1/events/index'
+import { Route as ApiV1EventsIdRouteImport } from './routes/api/v1/events/$id'
+import { Route as ApiV1SearchFacetsRouteImport } from './routes/api/v1/search/facets'
+import { Route as ApiV1SearchFeedbackRouteImport } from './routes/api/v1/search/feedback'
+import { Route as ApiV1SearchHistoryRouteImport } from './routes/api/v1/search/history'
+import { Route as ApiV1SearchHybridRouteImport } from './routes/api/v1/search/hybrid'
+import { Route as ApiV1SearchSemanticRouteImport } from './routes/api/v1/search/semantic'
+import { Route as ApiV1UiGenerateRouteImport } from './routes/api/v1/ui/generate'
+import { Route as ApiV1UiValidateRouteImport } from './routes/api/v1/ui/validate'
+import { Route as ApiV1WorkspacesIndexRouteImport } from './routes/api/v1/workspaces/index'
+import { Route as ApiV1ChatSessionsIndexRouteImport } from './routes/api/v1/chat/sessions/index'
+import { Route as ApiV1DashboardsIdIndexRouteImport } from './routes/api/v1/dashboards/$id/index'
+import { Route as ApiV1DashboardsIdDuplicateRouteImport } from './routes/api/v1/dashboards/$id/duplicate'
+import { Route as ApiV1DashboardsIdExportRouteImport } from './routes/api/v1/dashboards/$id/export'
+import { Route as ApiV1UiArtifactsIdRouteImport } from './routes/api/v1/ui/artifacts/$id'
+import { Route as ApiV1WorkspacesIdAuditRouteImport } from './routes/api/v1/workspaces/$id/audit'
+import { Route as ApiV1WorkspacesIdMembersRouteImport } from './routes/api/v1/workspaces/$id/members'
+import { Route as ApiV1ChatSessionsIdIndexRouteImport } from './routes/api/v1/chat/sessions/$id/index'
+import { Route as ApiV1ChatSessionsIdMessagesRouteImport } from './routes/api/v1/chat/sessions/$id/messages'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1HealthRoute = ApiV1HealthRouteImport.update({
+  id: '/api/v1/health',
+  path: '/api/v1/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1AnalyticsAggregateRoute = ApiV1AnalyticsAggregateRouteImport.update({
+  id: '/api/v1/analytics/aggregate',
+  path: '/api/v1/analytics/aggregate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1AnalyticsMetricsRoute = ApiV1AnalyticsMetricsRouteImport.update({
+  id: '/api/v1/analytics/metrics',
+  path: '/api/v1/analytics/metrics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1AnalyticsQueryRoute = ApiV1AnalyticsQueryRouteImport.update({
+  id: '/api/v1/analytics/query',
+  path: '/api/v1/analytics/query',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1ChatIndexRoute = ApiV1ChatIndexRouteImport.update({
+  id: '/api/v1/chat/',
+  path: '/api/v1/chat/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1DashboardsIndexRoute = ApiV1DashboardsIndexRouteImport.update({
+  id: '/api/v1/dashboards/',
+  path: '/api/v1/dashboards/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1EmbeddingsGenerateRoute = ApiV1EmbeddingsGenerateRouteImport.update({
+  id: '/api/v1/embeddings/generate',
+  path: '/api/v1/embeddings/generate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1EmbeddingsReindexRoute = ApiV1EmbeddingsReindexRouteImport.update({
+  id: '/api/v1/embeddings/reindex',
+  path: '/api/v1/embeddings/reindex',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1EmbeddingsStatusRoute = ApiV1EmbeddingsStatusRouteImport.update({
+  id: '/api/v1/embeddings/status',
+  path: '/api/v1/embeddings/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1EventsIndexRoute = ApiV1EventsIndexRouteImport.update({
+  id: '/api/v1/events/',
+  path: '/api/v1/events/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1EventsIdRoute = ApiV1EventsIdRouteImport.update({
+  id: '/api/v1/events/$id',
+  path: '/api/v1/events/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1SearchFacetsRoute = ApiV1SearchFacetsRouteImport.update({
+  id: '/api/v1/search/facets',
+  path: '/api/v1/search/facets',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1SearchFeedbackRoute = ApiV1SearchFeedbackRouteImport.update({
+  id: '/api/v1/search/feedback',
+  path: '/api/v1/search/feedback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1SearchHistoryRoute = ApiV1SearchHistoryRouteImport.update({
+  id: '/api/v1/search/history',
+  path: '/api/v1/search/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1SearchHybridRoute = ApiV1SearchHybridRouteImport.update({
+  id: '/api/v1/search/hybrid',
+  path: '/api/v1/search/hybrid',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1SearchSemanticRoute = ApiV1SearchSemanticRouteImport.update({
+  id: '/api/v1/search/semantic',
+  path: '/api/v1/search/semantic',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1UiGenerateRoute = ApiV1UiGenerateRouteImport.update({
+  id: '/api/v1/ui/generate',
+  path: '/api/v1/ui/generate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1UiValidateRoute = ApiV1UiValidateRouteImport.update({
+  id: '/api/v1/ui/validate',
+  path: '/api/v1/ui/validate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1WorkspacesIndexRoute = ApiV1WorkspacesIndexRouteImport.update({
+  id: '/api/v1/workspaces/',
+  path: '/api/v1/workspaces/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1ChatSessionsIndexRoute = ApiV1ChatSessionsIndexRouteImport.update({
+  id: '/api/v1/chat/sessions/',
+  path: '/api/v1/chat/sessions/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1DashboardsIdIndexRoute = ApiV1DashboardsIdIndexRouteImport.update({
+  id: '/api/v1/dashboards/$id/',
+  path: '/api/v1/dashboards/$id/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1DashboardsIdDuplicateRoute =
+  ApiV1DashboardsIdDuplicateRouteImport.update({
+    id: '/api/v1/dashboards/$id/duplicate',
+    path: '/api/v1/dashboards/$id/duplicate',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiV1DashboardsIdExportRoute = ApiV1DashboardsIdExportRouteImport.update({
+  id: '/api/v1/dashboards/$id/export',
+  path: '/api/v1/dashboards/$id/export',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1UiArtifactsIdRoute = ApiV1UiArtifactsIdRouteImport.update({
+  id: '/api/v1/ui/artifacts/$id',
+  path: '/api/v1/ui/artifacts/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1WorkspacesIdAuditRoute = ApiV1WorkspacesIdAuditRouteImport.update({
+  id: '/api/v1/workspaces/$id/audit',
+  path: '/api/v1/workspaces/$id/audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1WorkspacesIdMembersRoute =
+  ApiV1WorkspacesIdMembersRouteImport.update({
+    id: '/api/v1/workspaces/$id/members',
+    path: '/api/v1/workspaces/$id/members',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiV1ChatSessionsIdIndexRoute =
+  ApiV1ChatSessionsIdIndexRouteImport.update({
+    id: '/api/v1/chat/sessions/$id/',
+    path: '/api/v1/chat/sessions/$id/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiV1ChatSessionsIdMessagesRoute =
+  ApiV1ChatSessionsIdMessagesRouteImport.update({
+    id: '/api/v1/chat/sessions/$id/messages',
+    path: '/api/v1/chat/sessions/$id/messages',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/v1/health': typeof ApiV1HealthRoute
+  '/api/v1/analytics/aggregate': typeof ApiV1AnalyticsAggregateRoute
+  '/api/v1/analytics/metrics': typeof ApiV1AnalyticsMetricsRoute
+  '/api/v1/analytics/query': typeof ApiV1AnalyticsQueryRoute
+  '/api/v1/embeddings/generate': typeof ApiV1EmbeddingsGenerateRoute
+  '/api/v1/embeddings/reindex': typeof ApiV1EmbeddingsReindexRoute
+  '/api/v1/embeddings/status': typeof ApiV1EmbeddingsStatusRoute
+  '/api/v1/events/$id': typeof ApiV1EventsIdRoute
+  '/api/v1/search/facets': typeof ApiV1SearchFacetsRoute
+  '/api/v1/search/feedback': typeof ApiV1SearchFeedbackRoute
+  '/api/v1/search/history': typeof ApiV1SearchHistoryRoute
+  '/api/v1/search/hybrid': typeof ApiV1SearchHybridRoute
+  '/api/v1/search/semantic': typeof ApiV1SearchSemanticRoute
+  '/api/v1/ui/generate': typeof ApiV1UiGenerateRoute
+  '/api/v1/ui/validate': typeof ApiV1UiValidateRoute
+  '/api/v1/chat/': typeof ApiV1ChatIndexRoute
+  '/api/v1/dashboards/': typeof ApiV1DashboardsIndexRoute
+  '/api/v1/events/': typeof ApiV1EventsIndexRoute
+  '/api/v1/workspaces/': typeof ApiV1WorkspacesIndexRoute
+  '/api/v1/dashboards/$id/duplicate': typeof ApiV1DashboardsIdDuplicateRoute
+  '/api/v1/dashboards/$id/export': typeof ApiV1DashboardsIdExportRoute
+  '/api/v1/ui/artifacts/$id': typeof ApiV1UiArtifactsIdRoute
+  '/api/v1/workspaces/$id/audit': typeof ApiV1WorkspacesIdAuditRoute
+  '/api/v1/workspaces/$id/members': typeof ApiV1WorkspacesIdMembersRoute
+  '/api/v1/chat/sessions/': typeof ApiV1ChatSessionsIndexRoute
+  '/api/v1/dashboards/$id/': typeof ApiV1DashboardsIdIndexRoute
+  '/api/v1/chat/sessions/$id/messages': typeof ApiV1ChatSessionsIdMessagesRoute
+  '/api/v1/chat/sessions/$id/': typeof ApiV1ChatSessionsIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/v1/health': typeof ApiV1HealthRoute
+  '/api/v1/analytics/aggregate': typeof ApiV1AnalyticsAggregateRoute
+  '/api/v1/analytics/metrics': typeof ApiV1AnalyticsMetricsRoute
+  '/api/v1/analytics/query': typeof ApiV1AnalyticsQueryRoute
+  '/api/v1/embeddings/generate': typeof ApiV1EmbeddingsGenerateRoute
+  '/api/v1/embeddings/reindex': typeof ApiV1EmbeddingsReindexRoute
+  '/api/v1/embeddings/status': typeof ApiV1EmbeddingsStatusRoute
+  '/api/v1/events/$id': typeof ApiV1EventsIdRoute
+  '/api/v1/search/facets': typeof ApiV1SearchFacetsRoute
+  '/api/v1/search/feedback': typeof ApiV1SearchFeedbackRoute
+  '/api/v1/search/history': typeof ApiV1SearchHistoryRoute
+  '/api/v1/search/hybrid': typeof ApiV1SearchHybridRoute
+  '/api/v1/search/semantic': typeof ApiV1SearchSemanticRoute
+  '/api/v1/ui/generate': typeof ApiV1UiGenerateRoute
+  '/api/v1/ui/validate': typeof ApiV1UiValidateRoute
+  '/api/v1/chat': typeof ApiV1ChatIndexRoute
+  '/api/v1/dashboards': typeof ApiV1DashboardsIndexRoute
+  '/api/v1/events': typeof ApiV1EventsIndexRoute
+  '/api/v1/workspaces': typeof ApiV1WorkspacesIndexRoute
+  '/api/v1/dashboards/$id/duplicate': typeof ApiV1DashboardsIdDuplicateRoute
+  '/api/v1/dashboards/$id/export': typeof ApiV1DashboardsIdExportRoute
+  '/api/v1/ui/artifacts/$id': typeof ApiV1UiArtifactsIdRoute
+  '/api/v1/workspaces/$id/audit': typeof ApiV1WorkspacesIdAuditRoute
+  '/api/v1/workspaces/$id/members': typeof ApiV1WorkspacesIdMembersRoute
+  '/api/v1/chat/sessions': typeof ApiV1ChatSessionsIndexRoute
+  '/api/v1/dashboards/$id': typeof ApiV1DashboardsIdIndexRoute
+  '/api/v1/chat/sessions/$id/messages': typeof ApiV1ChatSessionsIdMessagesRoute
+  '/api/v1/chat/sessions/$id': typeof ApiV1ChatSessionsIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/v1/health': typeof ApiV1HealthRoute
+  '/api/v1/analytics/aggregate': typeof ApiV1AnalyticsAggregateRoute
+  '/api/v1/analytics/metrics': typeof ApiV1AnalyticsMetricsRoute
+  '/api/v1/analytics/query': typeof ApiV1AnalyticsQueryRoute
+  '/api/v1/embeddings/generate': typeof ApiV1EmbeddingsGenerateRoute
+  '/api/v1/embeddings/reindex': typeof ApiV1EmbeddingsReindexRoute
+  '/api/v1/embeddings/status': typeof ApiV1EmbeddingsStatusRoute
+  '/api/v1/events/$id': typeof ApiV1EventsIdRoute
+  '/api/v1/search/facets': typeof ApiV1SearchFacetsRoute
+  '/api/v1/search/feedback': typeof ApiV1SearchFeedbackRoute
+  '/api/v1/search/history': typeof ApiV1SearchHistoryRoute
+  '/api/v1/search/hybrid': typeof ApiV1SearchHybridRoute
+  '/api/v1/search/semantic': typeof ApiV1SearchSemanticRoute
+  '/api/v1/ui/generate': typeof ApiV1UiGenerateRoute
+  '/api/v1/ui/validate': typeof ApiV1UiValidateRoute
+  '/api/v1/chat/': typeof ApiV1ChatIndexRoute
+  '/api/v1/dashboards/': typeof ApiV1DashboardsIndexRoute
+  '/api/v1/events/': typeof ApiV1EventsIndexRoute
+  '/api/v1/workspaces/': typeof ApiV1WorkspacesIndexRoute
+  '/api/v1/dashboards/$id/duplicate': typeof ApiV1DashboardsIdDuplicateRoute
+  '/api/v1/dashboards/$id/export': typeof ApiV1DashboardsIdExportRoute
+  '/api/v1/ui/artifacts/$id': typeof ApiV1UiArtifactsIdRoute
+  '/api/v1/workspaces/$id/audit': typeof ApiV1WorkspacesIdAuditRoute
+  '/api/v1/workspaces/$id/members': typeof ApiV1WorkspacesIdMembersRoute
+  '/api/v1/chat/sessions/': typeof ApiV1ChatSessionsIndexRoute
+  '/api/v1/dashboards/$id/': typeof ApiV1DashboardsIdIndexRoute
+  '/api/v1/chat/sessions/$id/messages': typeof ApiV1ChatSessionsIdMessagesRoute
+  '/api/v1/chat/sessions/$id/': typeof ApiV1ChatSessionsIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/api/v1/health'
+    | '/api/v1/analytics/aggregate'
+    | '/api/v1/analytics/metrics'
+    | '/api/v1/analytics/query'
+    | '/api/v1/embeddings/generate'
+    | '/api/v1/embeddings/reindex'
+    | '/api/v1/embeddings/status'
+    | '/api/v1/events/$id'
+    | '/api/v1/search/facets'
+    | '/api/v1/search/feedback'
+    | '/api/v1/search/history'
+    | '/api/v1/search/hybrid'
+    | '/api/v1/search/semantic'
+    | '/api/v1/ui/generate'
+    | '/api/v1/ui/validate'
+    | '/api/v1/chat/'
+    | '/api/v1/dashboards/'
+    | '/api/v1/events/'
+    | '/api/v1/workspaces/'
+    | '/api/v1/dashboards/$id/duplicate'
+    | '/api/v1/dashboards/$id/export'
+    | '/api/v1/ui/artifacts/$id'
+    | '/api/v1/workspaces/$id/audit'
+    | '/api/v1/workspaces/$id/members'
+    | '/api/v1/chat/sessions/'
+    | '/api/v1/dashboards/$id/'
+    | '/api/v1/chat/sessions/$id/messages'
+    | '/api/v1/chat/sessions/$id/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/api/v1/health'
+    | '/api/v1/analytics/aggregate'
+    | '/api/v1/analytics/metrics'
+    | '/api/v1/analytics/query'
+    | '/api/v1/embeddings/generate'
+    | '/api/v1/embeddings/reindex'
+    | '/api/v1/embeddings/status'
+    | '/api/v1/events/$id'
+    | '/api/v1/search/facets'
+    | '/api/v1/search/feedback'
+    | '/api/v1/search/history'
+    | '/api/v1/search/hybrid'
+    | '/api/v1/search/semantic'
+    | '/api/v1/ui/generate'
+    | '/api/v1/ui/validate'
+    | '/api/v1/chat'
+    | '/api/v1/dashboards'
+    | '/api/v1/events'
+    | '/api/v1/workspaces'
+    | '/api/v1/dashboards/$id/duplicate'
+    | '/api/v1/dashboards/$id/export'
+    | '/api/v1/ui/artifacts/$id'
+    | '/api/v1/workspaces/$id/audit'
+    | '/api/v1/workspaces/$id/members'
+    | '/api/v1/chat/sessions'
+    | '/api/v1/dashboards/$id'
+    | '/api/v1/chat/sessions/$id/messages'
+    | '/api/v1/chat/sessions/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/v1/health'
+    | '/api/v1/analytics/aggregate'
+    | '/api/v1/analytics/metrics'
+    | '/api/v1/analytics/query'
+    | '/api/v1/embeddings/generate'
+    | '/api/v1/embeddings/reindex'
+    | '/api/v1/embeddings/status'
+    | '/api/v1/events/$id'
+    | '/api/v1/search/facets'
+    | '/api/v1/search/feedback'
+    | '/api/v1/search/history'
+    | '/api/v1/search/hybrid'
+    | '/api/v1/search/semantic'
+    | '/api/v1/ui/generate'
+    | '/api/v1/ui/validate'
+    | '/api/v1/chat/'
+    | '/api/v1/dashboards/'
+    | '/api/v1/events/'
+    | '/api/v1/workspaces/'
+    | '/api/v1/dashboards/$id/duplicate'
+    | '/api/v1/dashboards/$id/export'
+    | '/api/v1/ui/artifacts/$id'
+    | '/api/v1/workspaces/$id/audit'
+    | '/api/v1/workspaces/$id/members'
+    | '/api/v1/chat/sessions/'
+    | '/api/v1/dashboards/$id/'
+    | '/api/v1/chat/sessions/$id/messages'
+    | '/api/v1/chat/sessions/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiV1HealthRoute: typeof ApiV1HealthRoute
+  ApiV1AnalyticsAggregateRoute: typeof ApiV1AnalyticsAggregateRoute
+  ApiV1AnalyticsMetricsRoute: typeof ApiV1AnalyticsMetricsRoute
+  ApiV1AnalyticsQueryRoute: typeof ApiV1AnalyticsQueryRoute
+  ApiV1EmbeddingsGenerateRoute: typeof ApiV1EmbeddingsGenerateRoute
+  ApiV1EmbeddingsReindexRoute: typeof ApiV1EmbeddingsReindexRoute
+  ApiV1EmbeddingsStatusRoute: typeof ApiV1EmbeddingsStatusRoute
+  ApiV1EventsIdRoute: typeof ApiV1EventsIdRoute
+  ApiV1SearchFacetsRoute: typeof ApiV1SearchFacetsRoute
+  ApiV1SearchFeedbackRoute: typeof ApiV1SearchFeedbackRoute
+  ApiV1SearchHistoryRoute: typeof ApiV1SearchHistoryRoute
+  ApiV1SearchHybridRoute: typeof ApiV1SearchHybridRoute
+  ApiV1SearchSemanticRoute: typeof ApiV1SearchSemanticRoute
+  ApiV1UiGenerateRoute: typeof ApiV1UiGenerateRoute
+  ApiV1UiValidateRoute: typeof ApiV1UiValidateRoute
+  ApiV1ChatIndexRoute: typeof ApiV1ChatIndexRoute
+  ApiV1DashboardsIndexRoute: typeof ApiV1DashboardsIndexRoute
+  ApiV1EventsIndexRoute: typeof ApiV1EventsIndexRoute
+  ApiV1WorkspacesIndexRoute: typeof ApiV1WorkspacesIndexRoute
+  ApiV1DashboardsIdDuplicateRoute: typeof ApiV1DashboardsIdDuplicateRoute
+  ApiV1DashboardsIdExportRoute: typeof ApiV1DashboardsIdExportRoute
+  ApiV1UiArtifactsIdRoute: typeof ApiV1UiArtifactsIdRoute
+  ApiV1WorkspacesIdAuditRoute: typeof ApiV1WorkspacesIdAuditRoute
+  ApiV1WorkspacesIdMembersRoute: typeof ApiV1WorkspacesIdMembersRoute
+  ApiV1ChatSessionsIndexRoute: typeof ApiV1ChatSessionsIndexRoute
+  ApiV1DashboardsIdIndexRoute: typeof ApiV1DashboardsIdIndexRoute
+  ApiV1ChatSessionsIdMessagesRoute: typeof ApiV1ChatSessionsIdMessagesRoute
+  ApiV1ChatSessionsIdIndexRoute: typeof ApiV1ChatSessionsIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +420,235 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/health': {
+      id: '/api/v1/health'
+      path: '/api/v1/health'
+      fullPath: '/api/v1/health'
+      preLoaderRoute: typeof ApiV1HealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/analytics/aggregate': {
+      id: '/api/v1/analytics/aggregate'
+      path: '/api/v1/analytics/aggregate'
+      fullPath: '/api/v1/analytics/aggregate'
+      preLoaderRoute: typeof ApiV1AnalyticsAggregateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/analytics/metrics': {
+      id: '/api/v1/analytics/metrics'
+      path: '/api/v1/analytics/metrics'
+      fullPath: '/api/v1/analytics/metrics'
+      preLoaderRoute: typeof ApiV1AnalyticsMetricsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/analytics/query': {
+      id: '/api/v1/analytics/query'
+      path: '/api/v1/analytics/query'
+      fullPath: '/api/v1/analytics/query'
+      preLoaderRoute: typeof ApiV1AnalyticsQueryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/chat/': {
+      id: '/api/v1/chat/'
+      path: '/api/v1/chat'
+      fullPath: '/api/v1/chat/'
+      preLoaderRoute: typeof ApiV1ChatIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/dashboards/': {
+      id: '/api/v1/dashboards/'
+      path: '/api/v1/dashboards'
+      fullPath: '/api/v1/dashboards/'
+      preLoaderRoute: typeof ApiV1DashboardsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/embeddings/generate': {
+      id: '/api/v1/embeddings/generate'
+      path: '/api/v1/embeddings/generate'
+      fullPath: '/api/v1/embeddings/generate'
+      preLoaderRoute: typeof ApiV1EmbeddingsGenerateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/embeddings/reindex': {
+      id: '/api/v1/embeddings/reindex'
+      path: '/api/v1/embeddings/reindex'
+      fullPath: '/api/v1/embeddings/reindex'
+      preLoaderRoute: typeof ApiV1EmbeddingsReindexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/embeddings/status': {
+      id: '/api/v1/embeddings/status'
+      path: '/api/v1/embeddings/status'
+      fullPath: '/api/v1/embeddings/status'
+      preLoaderRoute: typeof ApiV1EmbeddingsStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/events/': {
+      id: '/api/v1/events/'
+      path: '/api/v1/events'
+      fullPath: '/api/v1/events/'
+      preLoaderRoute: typeof ApiV1EventsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/events/$id': {
+      id: '/api/v1/events/$id'
+      path: '/api/v1/events/$id'
+      fullPath: '/api/v1/events/$id'
+      preLoaderRoute: typeof ApiV1EventsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/search/facets': {
+      id: '/api/v1/search/facets'
+      path: '/api/v1/search/facets'
+      fullPath: '/api/v1/search/facets'
+      preLoaderRoute: typeof ApiV1SearchFacetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/search/feedback': {
+      id: '/api/v1/search/feedback'
+      path: '/api/v1/search/feedback'
+      fullPath: '/api/v1/search/feedback'
+      preLoaderRoute: typeof ApiV1SearchFeedbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/search/history': {
+      id: '/api/v1/search/history'
+      path: '/api/v1/search/history'
+      fullPath: '/api/v1/search/history'
+      preLoaderRoute: typeof ApiV1SearchHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/search/hybrid': {
+      id: '/api/v1/search/hybrid'
+      path: '/api/v1/search/hybrid'
+      fullPath: '/api/v1/search/hybrid'
+      preLoaderRoute: typeof ApiV1SearchHybridRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/search/semantic': {
+      id: '/api/v1/search/semantic'
+      path: '/api/v1/search/semantic'
+      fullPath: '/api/v1/search/semantic'
+      preLoaderRoute: typeof ApiV1SearchSemanticRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/ui/generate': {
+      id: '/api/v1/ui/generate'
+      path: '/api/v1/ui/generate'
+      fullPath: '/api/v1/ui/generate'
+      preLoaderRoute: typeof ApiV1UiGenerateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/ui/validate': {
+      id: '/api/v1/ui/validate'
+      path: '/api/v1/ui/validate'
+      fullPath: '/api/v1/ui/validate'
+      preLoaderRoute: typeof ApiV1UiValidateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/workspaces/': {
+      id: '/api/v1/workspaces/'
+      path: '/api/v1/workspaces'
+      fullPath: '/api/v1/workspaces/'
+      preLoaderRoute: typeof ApiV1WorkspacesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/chat/sessions/': {
+      id: '/api/v1/chat/sessions/'
+      path: '/api/v1/chat/sessions'
+      fullPath: '/api/v1/chat/sessions/'
+      preLoaderRoute: typeof ApiV1ChatSessionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/dashboards/$id/': {
+      id: '/api/v1/dashboards/$id/'
+      path: '/api/v1/dashboards/$id'
+      fullPath: '/api/v1/dashboards/$id/'
+      preLoaderRoute: typeof ApiV1DashboardsIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/dashboards/$id/duplicate': {
+      id: '/api/v1/dashboards/$id/duplicate'
+      path: '/api/v1/dashboards/$id/duplicate'
+      fullPath: '/api/v1/dashboards/$id/duplicate'
+      preLoaderRoute: typeof ApiV1DashboardsIdDuplicateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/dashboards/$id/export': {
+      id: '/api/v1/dashboards/$id/export'
+      path: '/api/v1/dashboards/$id/export'
+      fullPath: '/api/v1/dashboards/$id/export'
+      preLoaderRoute: typeof ApiV1DashboardsIdExportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/ui/artifacts/$id': {
+      id: '/api/v1/ui/artifacts/$id'
+      path: '/api/v1/ui/artifacts/$id'
+      fullPath: '/api/v1/ui/artifacts/$id'
+      preLoaderRoute: typeof ApiV1UiArtifactsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/workspaces/$id/audit': {
+      id: '/api/v1/workspaces/$id/audit'
+      path: '/api/v1/workspaces/$id/audit'
+      fullPath: '/api/v1/workspaces/$id/audit'
+      preLoaderRoute: typeof ApiV1WorkspacesIdAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/workspaces/$id/members': {
+      id: '/api/v1/workspaces/$id/members'
+      path: '/api/v1/workspaces/$id/members'
+      fullPath: '/api/v1/workspaces/$id/members'
+      preLoaderRoute: typeof ApiV1WorkspacesIdMembersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/chat/sessions/$id/': {
+      id: '/api/v1/chat/sessions/$id/'
+      path: '/api/v1/chat/sessions/$id'
+      fullPath: '/api/v1/chat/sessions/$id/'
+      preLoaderRoute: typeof ApiV1ChatSessionsIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/chat/sessions/$id/messages': {
+      id: '/api/v1/chat/sessions/$id/messages'
+      path: '/api/v1/chat/sessions/$id/messages'
+      fullPath: '/api/v1/chat/sessions/$id/messages'
+      preLoaderRoute: typeof ApiV1ChatSessionsIdMessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiV1HealthRoute: ApiV1HealthRoute,
+  ApiV1AnalyticsAggregateRoute: ApiV1AnalyticsAggregateRoute,
+  ApiV1AnalyticsMetricsRoute: ApiV1AnalyticsMetricsRoute,
+  ApiV1AnalyticsQueryRoute: ApiV1AnalyticsQueryRoute,
+  ApiV1EmbeddingsGenerateRoute: ApiV1EmbeddingsGenerateRoute,
+  ApiV1EmbeddingsReindexRoute: ApiV1EmbeddingsReindexRoute,
+  ApiV1EmbeddingsStatusRoute: ApiV1EmbeddingsStatusRoute,
+  ApiV1EventsIdRoute: ApiV1EventsIdRoute,
+  ApiV1SearchFacetsRoute: ApiV1SearchFacetsRoute,
+  ApiV1SearchFeedbackRoute: ApiV1SearchFeedbackRoute,
+  ApiV1SearchHistoryRoute: ApiV1SearchHistoryRoute,
+  ApiV1SearchHybridRoute: ApiV1SearchHybridRoute,
+  ApiV1SearchSemanticRoute: ApiV1SearchSemanticRoute,
+  ApiV1UiGenerateRoute: ApiV1UiGenerateRoute,
+  ApiV1UiValidateRoute: ApiV1UiValidateRoute,
+  ApiV1ChatIndexRoute: ApiV1ChatIndexRoute,
+  ApiV1DashboardsIndexRoute: ApiV1DashboardsIndexRoute,
+  ApiV1EventsIndexRoute: ApiV1EventsIndexRoute,
+  ApiV1WorkspacesIndexRoute: ApiV1WorkspacesIndexRoute,
+  ApiV1DashboardsIdDuplicateRoute: ApiV1DashboardsIdDuplicateRoute,
+  ApiV1DashboardsIdExportRoute: ApiV1DashboardsIdExportRoute,
+  ApiV1UiArtifactsIdRoute: ApiV1UiArtifactsIdRoute,
+  ApiV1WorkspacesIdAuditRoute: ApiV1WorkspacesIdAuditRoute,
+  ApiV1WorkspacesIdMembersRoute: ApiV1WorkspacesIdMembersRoute,
+  ApiV1ChatSessionsIndexRoute: ApiV1ChatSessionsIndexRoute,
+  ApiV1DashboardsIdIndexRoute: ApiV1DashboardsIdIndexRoute,
+  ApiV1ChatSessionsIdMessagesRoute: ApiV1ChatSessionsIdMessagesRoute,
+  ApiV1ChatSessionsIdIndexRoute: ApiV1ChatSessionsIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
